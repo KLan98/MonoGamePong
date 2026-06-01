@@ -366,3 +366,5 @@ FodyWeavers.xsd
 /Pong/.config/
 /Pong/bin/
 /Pong/obj/
+/Pong/obj/Debug/net8.0/Pong.AssemblyInfo.cs
+/Pong/obj/Debug/net8.0/Pong.AssemblyInfoInputs.cache
