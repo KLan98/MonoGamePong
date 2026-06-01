@@ -1,0 +1,9 @@
+Source File,Dest File,Processor Type,Content Type,Source File Size,Dest File Size,Build Seconds
+"C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/PongAssets/Ball.png","C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/bin/DesktopGL/PongAssets/Ball.xnb","TextureProcessor","Texture2DContent",863,3685,0.0795902
+"C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/PongAssets/BallMotion.png","C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/bin/DesktopGL/PongAssets/BallMotion.xnb","TextureProcessor","Texture2DContent",1288,8549,0.0029528
+"C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/PongAssets/Board.png","C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/bin/DesktopGL/PongAssets/Board.xnb","TextureProcessor","Texture2DContent",2961,1459725,0.0387232
+"C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/PongAssets/Computer.png","C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/bin/DesktopGL/PongAssets/Computer.xnb","TextureProcessor","Texture2DContent",807,8245,0.0015294
+"C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/PongAssets/File.xml","C:\Users\Lan Pham\Playground\MonoGame\Pong\Pong\Content\bin\DesktopGL\PongAssets/TextureAtlas.xml","CopyItem","File",256,256,0.0011526
+"C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/PongAssets/Player.png","C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/bin/DesktopGL/PongAssets/Player.xnb","TextureProcessor","Texture2DContent",810,8245,0.0020947
+"C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/PongAssets/ScoreBar.png","C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/bin/DesktopGL/PongAssets/ScoreBar.xnb","TextureProcessor","Texture2DContent",1032,64193,0.0039305
+"C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/PongAssets/spritesheet.png","C:/Users/Lan Pham/Playground/MonoGame/Pong/Pong/Content/bin/DesktopGL/PongAssets/spritesheet.xnb","TextureProcessor","Texture2DContent",19622,2280545,0.1827478
