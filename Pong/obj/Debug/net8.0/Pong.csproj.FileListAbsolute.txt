@@ -39,3 +39,4 @@ C:\Users\Lan Pham\Playground\MonoGame\Pong\Pong\bin\Debug\net8.0\Content\PongAss
 C:\Users\Lan Pham\Playground\MonoGame\Pong\Pong\bin\Debug\net8.0\Content\PongAssets\ScoreBar.xnb
 C:\Users\Lan Pham\Playground\MonoGame\Pong\Pong\bin\Debug\net8.0\Content\PongAssets\TextureAtlas.xml
 C:\Users\Lan Pham\Playground\MonoGame\Pong\Pong\bin\Debug\net8.0\Content\PongAssets\spritesheet.xnb
+C:\Users\Lan Pham\Playground\MonoGame\Pong\Pong\obj\Debug\net8.0\Pong.sourcelink.json

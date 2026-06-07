@@ -4,10 +4,18 @@ using Microsoft.Xna.Framework.Input;
 
 public struct EntityRender
 {
-    public Texture2D Texture;
+    /// <summary>
+    /// Scale property for sprites 
+    /// </summary>
+    public Vector2[] SpriteScale;
 
-    public EntityRender(Texture2D texture)
-    {
-        Texture = texture;
-    }
+    /// <summary>
+    /// Scale all sprites at once
+    /// </summary>
+    /// <returns></returns>
+    //public Vector2 ScaleSprite()
+    //{
+
+    //    return 
+    //}
 }

@@ -8,8 +8,10 @@ using System.Diagnostics;
 
 public class AssetsManager
 {
+    private static AssetsManager instance;
     private ContentManager content;
     private TextureRegion[] textureRegions;
+    private Sprite[] sprites;
     private Texture2D spriteSheet;
 
     public AssetsManager(ContentManager content)
@@ -17,23 +19,36 @@ public class AssetsManager
         this.content = content;
 
         spriteSheet = content.Load<Texture2D>("PongAssets/spritesheet");
-        CreateTextureRegions();
+        //CreateTextureRegions();
+        CreateSprites();
+        
+        if (instance != null && instance == this)
+        {
+            return;
+        }
+
+        instance = this;
     }
 
+    //-------------------------PUBLIC METHODS-------------------------
     public Texture2D GetSpriteSheet()
     {
         return spriteSheet;
     }
 
-    public TextureRegion[] GetTextureRegions()
+    //public TextureRegion[] GetTextureRegions()
+    //{
+    //    return textureRegions;
+    //}
+
+    public Sprite[] GetSprites()
     {
-        return textureRegions;
+        return sprites;
     }
 
-    private void AddRegion(TextureRegionType type, int x, int y, int width, int height)
+    public static AssetsManager GetInstance()
     {
-        TextureRegion textureRegion = new TextureRegion(spriteSheet, x, y, width, height);
-
+        return instance;
     }
 
     public TextureRegion GetRegion(TextureRegionType regionType)
@@ -41,8 +56,35 @@ public class AssetsManager
         return textureRegions[(int)regionType];
     }
 
-    public void CreateTextureRegions()
+    public Sprite GetSprite(TextureRegionType regionType)
     {
+        // can be improved by implementing binary sort
+        return sprites[(int)regionType];
+    }
+
+    //public void CreateTextureRegions()
+    //{
+    //    TextureRegion ball = new TextureRegion(spriteSheet, 0, 0, 30, 30);
+    //    TextureRegion ballMotion = new TextureRegion(spriteSheet, ball.GetRectWidth(), 0, 46, 46);
+    //    TextureRegion board = new TextureRegion(spriteSheet, ballMotion.GetRectWidth() + ball.GetRectWidth(), 0, 802, 455);
+    //    TextureRegion computer = new TextureRegion(spriteSheet, board.GetRectX() + board.GetRectWidth(), 0, 17, 120);
+    //    TextureRegion player = new TextureRegion(spriteSheet, computer.GetRectX() + computer.GetRectWidth(), 0, 17, 120);
+    //    TextureRegion scoreBar = new TextureRegion(spriteSheet, player.GetRectX() + player.GetRectWidth(), 0, 341, 47);
+
+    //    textureRegions = new TextureRegion[6] {
+    //        ball,
+    //        ballMotion,
+    //        board,
+    //        computer,
+    //        player,
+    //        scoreBar,
+    //    };
+    //}
+
+    //--------------------------------------PRIVATE METHODS---------------------------------
+    private void CreateSprites()
+    {
+        // Create texture regions from the sprite sheet
         TextureRegion ball = new TextureRegion(spriteSheet, 0, 0, 30, 30);
         TextureRegion ballMotion = new TextureRegion(spriteSheet, ball.GetRectWidth(), 0, 46, 46);
         TextureRegion board = new TextureRegion(spriteSheet, ballMotion.GetRectWidth() + ball.GetRectWidth(), 0, 802, 455);
@@ -57,6 +99,24 @@ public class AssetsManager
             computer,
             player,
             scoreBar,
+        };
+
+        // Create sprites from texture regions
+        Sprite ballSprite = new Sprite(ball);
+        Sprite ballMotionSprite = new Sprite(ballMotion);
+        Sprite boardSprite = new Sprite(board);
+        Sprite computerSprite = new Sprite(computer);
+        Sprite playerSprite = new Sprite(player);
+        Sprite scoreBarSprite = new Sprite(scoreBar);
+
+        sprites = new Sprite[6]
+        {
+            ballSprite,
+            ballMotionSprite,
+            boardSprite,
+            computerSprite,
+            playerSprite,
+            scoreBarSprite
         };
     }
 }

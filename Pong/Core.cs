@@ -1,7 +1,9 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using System;
+using System.Diagnostics;
 
 namespace LanMonoGameLibrary;
 
@@ -15,6 +17,8 @@ public class Core : Game
 
     private GraphicsDevice graphicsDevice; // the interface between your game and the Graphics Processing Unit (GPU) the game is running on
     private ContentManager contentManager;
+
+    private KeyboardState oldState;
 
     //-------------------------------------PROPERTIES-----------------------------------------------------
     public SpriteBatch SpriteBatch
@@ -81,5 +85,117 @@ public class Core : Game
     public ContentManager GetContentManager()
     {
         return contentManager;
+    }
+
+    /// <summary>
+    /// Find where the current value is on the scale of max in min
+    /// </summary>
+    /// <param name="currentValue"></param>
+    /// <param name="maxValue"></param>
+    /// <param name="minValue"></param>
+    /// <returns></returns>
+    public float InverseLerp(float currentValue, float minValue, float maxValue)
+    {
+        return (currentValue - minValue) / (maxValue - minValue);
+    }
+
+    public float Remap(float value, float inMin, float inMax, float outMin, float outMax)
+    {
+        float t = InverseLerp(value, inMin, inMax);
+        return Lerp(t, outMin, outMax);
+    }
+
+    public float Lerp(float currentValue, float minValue, float maxValue)
+    {
+        return minValue + currentValue * (maxValue - minValue);
+    }
+
+    /// <summary>
+    /// Get the resolution of the screen
+    /// </summary>
+    public Vector2 GetScreenResolution()
+    {
+        Vector2 res = new Vector2(graphicsDeviceManager.PreferredBackBufferWidth, graphicsDeviceManager.PreferredBackBufferHeight);
+        return res;
+    }
+
+    public void SetResolution1080p()
+    {
+        graphicsDeviceManager.PreferredBackBufferWidth = 1920;
+        graphicsDeviceManager.PreferredBackBufferHeight = 1080;
+        graphicsDeviceManager.ApplyChanges();
+    }
+
+    public void SetResolution600p()
+    {
+        graphicsDeviceManager.PreferredBackBufferWidth = 800;
+        graphicsDeviceManager.PreferredBackBufferHeight = 600;
+        graphicsDeviceManager.ApplyChanges();
+    }
+
+    public void SetResolution720p()
+    {
+        graphicsDeviceManager.PreferredBackBufferWidth = 1280;
+        graphicsDeviceManager.PreferredBackBufferHeight = 720;
+        graphicsDeviceManager.ApplyChanges();
+    }
+
+    public void UpdateInput()
+    {
+        KeyboardState newState = Keyboard.GetState();
+        
+        // is the a key down?
+        if (newState.IsKeyDown(Keys.A))
+        {
+            // if not then
+            if (!oldState.IsKeyDown(Keys.A))
+            {
+                SetResolution1080p();
+
+                Debug.WriteLine($"Key A pressed, screen resolution {GetScreenResolution().Y}");
+            }
+
+            // if a is down then
+            else
+            {
+                // button is being held
+            }
+        }
+
+        else if (newState.IsKeyDown(Keys.B))
+        {
+            // if not then
+            if (!oldState.IsKeyDown(Keys.B))
+            {
+                SetResolution600p();
+
+                Debug.WriteLine($"Key B pressed, screen resolution {GetScreenResolution().Y}");
+            }
+
+            // if key is down then
+            else
+            {
+                // button is being held
+            }
+        }
+
+        else if (newState.IsKeyDown(Keys.C))
+        {
+            // if not then
+            if (!oldState.IsKeyDown(Keys.C))
+            {
+                SetResolution720p();
+
+                Debug.WriteLine($"Key C pressed, screen resolution {GetScreenResolution().Y}");
+            }
+
+            // if key is down then
+            else
+            {
+                // button is being held
+            }
+        }
+
+        oldState = newState;
     }
 }
