@@ -1,19 +1,22 @@
-﻿using System;
+﻿using LanMonoGameLibrary;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using LanMonoGameLibrary;
-using System.Diagnostics;
 
 namespace Pong;
 
 public class MyGame : Core
 {
+    //--------------------------------FIELDS-------------------------------------------
     private AssetsManager assetsManager;
     private Texture2D spriteSheet;
     private Sprite[] sprites;
     private Sprite boardSprite;
+    private DebugConsole debugConsole;
     private Vector2 screenRes;
+    private KeyboardState oldState;
+    private bool toolActive;
+    private Matrix spriteScaleMatrix;
 
     public MyGame() : base("Pong", 1280, 720, false)
     {
@@ -23,6 +26,7 @@ public class MyGame : Core
     protected override void Initialize()
     {
         assetsManager = new AssetsManager(GetContentManager());
+        debugConsole = new DebugConsole();
         base.Initialize();
     }
 
@@ -55,7 +59,7 @@ public class MyGame : Core
     {
         GetGraphicsDevice().Clear(Color.CornflowerBlue);
 
-        SpriteBatch.Begin();
+        SpriteBatch.Begin(transformMatrix: spriteScaleMatrix);
 
         //SpriteBatch.Draw(spriteSheet, Vector2.Zero, Color.White);
         foreach (var sprite in sprites)
@@ -64,6 +68,11 @@ public class MyGame : Core
         }
 
         SpriteBatch.End();   
+
+        // Draw debug UI
+        ImGuiRenderer.BeginLayout(gameTime);
+        debugConsole.Update(toolActive);
+        ImGuiRenderer.EndLayout();
 
         base.Draw(gameTime);
     }
