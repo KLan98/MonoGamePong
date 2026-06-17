@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
-using MonoGame.ImGuiNet;
 
 namespace LanMonoGameLibrary;
 
@@ -15,28 +14,24 @@ public class Core : Game
 {
     //---------------------------------------FIELDS--------------------------------
     private static Core instance;
-
     // The graphics pipeline in MonoGame starts with two components: the GraphicsDeviceManager and SpriteBatch.
     private SpriteBatch spriteBatch; // The SpriteBatch optimizes 2D rendering by batching similar draw calls together, improving draw performance when rendering multiple sprites.
     private GraphicsDeviceManager graphicsDeviceManager; // The GraphicsDeviceManager initializes and manages the connection to the graphics hardware. It handles tasks such as setting the screen resolution, toggling between fullscreen and windowed mode, and managing the GraphicsDevice 
-
     private GraphicsDevice graphicsDevice; // the interface between your game and the Graphics Processing Unit (GPU) the game is running on
     private ContentManager contentManager;
-
     private KeyboardState oldState;
-
-    protected bool toolActive;
-
-    protected Matrix spriteScaleMatrix;
+    protected DebugConsole debugConsole;
 
     //-------------------------------------PROPERTIES-----------------------------------------------------
     public SpriteBatch SpriteBatch
     {
         get { return spriteBatch; }
     }
-
-    public ImGuiRenderer ImGuiRenderer
-    {  get; private set; }
+    
+    public Matrix SpriteScaleMatrix
+    {
+        get; private set;
+    }
 
     //------------------------------CONSTRUCTOR-------------------------
     public Core(string title, int width, int height, bool fullScreen)
@@ -56,6 +51,8 @@ public class Core : Game
 
         graphicsDeviceManager.ApplyChanges();
 
+        UpdateScaleMatrix();
+
         // set the window title
         Window.Title = title;
 
@@ -67,14 +64,6 @@ public class Core : Game
 
         // set mouse visibility
         IsMouseVisible = true;
-
-        // 
-        toolActive = false;
-    }
-
-    public static Core GetInstance()
-    {
-        return instance;
     }
 
     protected override void Initialize()
@@ -87,9 +76,16 @@ public class Core : Game
         // create new instance of sprite batch
         spriteBatch = new SpriteBatch(graphicsDevice);
 
-        // create the ImGui renderer 
-        ImGuiRenderer = new ImGuiRenderer(this);
-        ImGuiRenderer.RebuildFontAtlas();   
+        // create new instance of debug console
+        debugConsole = new DebugConsole(graphicsDeviceManager);
+        // inititalize debug console
+        debugConsole.Initialize(this);
+    }
+
+    //-------------------------------PUBLIC METHODS-----------------------------------
+    public static Core GetInstance()
+    {
+        return instance;
     }
 
     public GraphicsDevice GetGraphicsDevice()
@@ -107,7 +103,16 @@ public class Core : Game
         return contentManager;
     }
 
-    //-------------------------------PUBLIC METHODS-----------------------------------
+    /// <summary>
+    /// Called whenever the resolution is updated, compute the transformMatrix through scaleX and scaleY
+    /// </summary>
+    public void UpdateScaleMatrix()
+    {
+        float scaleX = graphicsDeviceManager.PreferredBackBufferWidth / 1280f;
+        float scaleY = graphicsDeviceManager.PreferredBackBufferHeight / 720f;
+        SpriteScaleMatrix = Matrix.CreateScale(scaleX, scaleY, 1f);
+    }
+
     /// <summary>
     /// Find where the current value is on the scale of max in min
     /// </summary>
@@ -140,92 +145,5 @@ public class Core : Game
         return res;
     }
 
-    //--------------------------------PROTECTED METHODS----------------------------
-    protected void UpdateInput()
-    {
-        KeyboardState newState = Keyboard.GetState();
-
-        // is the a key down?
-        if (newState.IsKeyDown(Keys.A))
-        {
-            // if not then
-            if (!oldState.IsKeyDown(Keys.A))
-            {
-                graphicsDeviceManager.PreferredBackBufferWidth = 1920;
-                graphicsDeviceManager.PreferredBackBufferHeight = 1080;
-                graphicsDeviceManager.ApplyChanges();
-
-                UpdateScaleMatrix();
-
-                Debug.WriteLine($"Key A pressed, screen resolution {GetScreenResolution().Y}");
-            }
-
-            // if a is down then
-            else
-            {
-                // button is being held
-            }
-        }
-
-        else if (newState.IsKeyDown(Keys.B))
-        {
-            // if not then
-            if (!oldState.IsKeyDown(Keys.B))
-            {
-                graphicsDeviceManager.PreferredBackBufferWidth = 800;
-                graphicsDeviceManager.PreferredBackBufferHeight = 600;
-                graphicsDeviceManager.ApplyChanges();
-
-                UpdateScaleMatrix();
-
-                Debug.WriteLine($"Key B pressed, screen resolution {GetScreenResolution().Y}");
-            }
-
-            // if key is down then
-            else
-            {
-                // button is being held
-            }
-        }
-
-        else if (newState.IsKeyDown(Keys.C))
-        {
-            // if not then
-            if (!oldState.IsKeyDown(Keys.C))
-            {
-                graphicsDeviceManager.PreferredBackBufferWidth = 1280;
-                graphicsDeviceManager.PreferredBackBufferHeight = 720;
-                graphicsDeviceManager.ApplyChanges();
-
-                UpdateScaleMatrix();
-
-                Debug.WriteLine($"Key C pressed, screen resolution {GetScreenResolution().Y}");
-            }
-
-            // if key is down then
-            else
-            {
-                // button is being held
-            }
-        }
-
-        else if (newState.IsKeyDown(Keys.D))
-        {
-            if (!oldState.IsKeyDown(Keys.D) && oldState.IsKeyDown(Keys.LeftControl))
-            {
-                // toggle tool active
-                toolActive = !toolActive;
-            }
-        }
-
-        oldState = newState;
-    }
-
     //-----------------------------------------------PRIVATE METHODS---------------------------------------
-    private void UpdateScaleMatrix()
-    {
-        float scaleX = graphicsDeviceManager.PreferredBackBufferWidth / 1280f;
-        float scaleY = graphicsDeviceManager.PreferredBackBufferHeight / 720f;
-        spriteScaleMatrix = Matrix.CreateScale(scaleX, scaleY, 1f);
-    }
 }

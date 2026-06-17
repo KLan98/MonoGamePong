@@ -368,3 +368,12 @@ FodyWeavers.xsd
 /Pong/obj/
 /Pong/obj/Debug/net8.0/Pong.AssemblyInfo.cs
 /Pong/obj/Debug/net8.0/Pong.AssemblyInfoInputs.cache
+/Pong/bin/Debug/net8.0/Pong.dll
+/Pong/bin/Debug/net8.0/Pong.exe
+/Pong/bin/Debug/net8.0/Pong.pdb
+/Pong/obj/Debug/net8.0/apphost.exe
+/Pong/obj/Debug/net8.0/Pong.csproj.CoreCompileInputs.cache
+/Pong/obj/Debug/net8.0/Pong.dll
+/Pong/obj/Debug/net8.0/Pong.pdb
+/Pong/obj/Debug/net8.0/ref/Pong.dll
+/Pong/obj/Debug/net8.0/refint/Pong.dll
