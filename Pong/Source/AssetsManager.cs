@@ -12,7 +12,9 @@ public class AssetsManager
     private ContentManager content;
     private TextureRegion[] textureRegions;
     private Sprite[] sprites;
+    private Sprite[] movingSprites;
     private Texture2D spriteSheet;
+    private Vector2[] sizeVector;
 
     public AssetsManager(ContentManager content)
     {
@@ -40,20 +42,30 @@ public class AssetsManager
         return sprites;
     }
 
+    public Sprite[] GetMovingSprites()
+    {
+        return movingSprites;
+    }
+
     public static AssetsManager GetInstance()
     {
         return instance;
     }
 
-    public TextureRegion GetRegion(TextureRegionType regionType)
-    {
-        return textureRegions[(int)regionType];
-    }
-
-    public Sprite GetSprite(TextureRegionType regionType)
+    public Sprite GetSprite(int index)
     {
         // can be improved by implementing binary sort
-        return sprites[(int)regionType];
+        return sprites[(int)index];
+    }
+
+    public Sprite GetMovingSprite(int index)
+    {
+        return movingSprites[index];
+    }
+
+    public Vector2[] GetSizeVector()
+    {
+        return sizeVector;
     }
 
     //--------------------------------------PRIVATE METHODS---------------------------------
@@ -78,30 +90,50 @@ public class AssetsManager
 
         // Create sprites from texture regions
         Sprite ballSprite = new Sprite(ball);
-        Sprite ballMotionSprite = new Sprite(ballMotion);
-        Sprite boardSprite = new Sprite(board);
-        Sprite computerSprite = new Sprite(computer);
-        Sprite playerSprite = new Sprite(player);
-        Sprite scoreBarSprite = new Sprite(scoreBar);
+        ballSprite.LayerDepth = 1.0f;
+        ballSprite.CenterOrigin();
 
-        sprites = new Sprite[6]
+        Sprite ballMotionSprite = new Sprite(ballMotion);
+        ballMotionSprite.LayerDepth = 1.0f;
+
+        Sprite boardSprite = new Sprite(board);
+        boardSprite.LayerDepth = 0.0f;
+
+        Sprite computerSprite = new Sprite(computer);
+        computerSprite.LayerDepth = 1.0f;
+        
+        Sprite playerSprite = new Sprite(player);
+        playerSprite.LayerDepth = 1.0f;
+
+        Sprite playerScoreBarSprite = new Sprite(scoreBar);
+        playerScoreBarSprite.LayerDepth = 0.1f;
+
+        Sprite comScoreBarSprite = new Sprite(scoreBar);
+        comScoreBarSprite.LayerDepth = 0.1f;
+        comScoreBarSprite.SpriteEffects = SpriteEffects.FlipHorizontally;
+
+        sprites = new Sprite[3]
         {
-            ballSprite,
-            ballMotionSprite,
             boardSprite,
-            computerSprite,
+            playerScoreBarSprite,
+            comScoreBarSprite
+        };
+
+        movingSprites = new Sprite[3]
+        {
             playerSprite,
-            scoreBarSprite
+            computerSprite,
+            ballSprite
+        };
+
+        sizeVector = new Vector2[6]
+        {
+            boardSprite.Size,
+            playerScoreBarSprite.Size,
+            comScoreBarSprite.Size,
+            playerSprite.Size,
+            computerSprite.Size,
+            ballSprite.Size
         };
     }
-}
-
-public enum TextureRegionType
-{
-    Ball,
-    BallMotion,
-    Board,
-    Computer,
-    Player,
-    ScoreBar
 }

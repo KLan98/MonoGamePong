@@ -40,6 +40,7 @@ public class DebugConsole
             if (ImGui.BeginMenuBar())
             {
                 ImGui.Text($"FPS {ImGui.GetIO().Framerate}");
+                ImGui.Text($"Frame time {ImGui.GetIO().DeltaTime}");
                 if (ImGui.BeginMenu("UI Settings"))
                 {
                     if (ImGui.BeginCombo("Resolution", resolutionPresets[currentResolution]))

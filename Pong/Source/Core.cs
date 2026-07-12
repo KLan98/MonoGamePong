@@ -145,5 +145,15 @@ public class Core : Game
         return res;
     }
 
+    public float EaseOutCubic(float x)
+    {
+        return 1 - (float)Math.Pow(1 - x, 3);
+    }
+
+    public float EaseInQuad(float x)
+    {
+        return x * x;
+    }
+
     //-----------------------------------------------PRIVATE METHODS---------------------------------------
 }

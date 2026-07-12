@@ -24,6 +24,10 @@ public class Sprite
 	/// How many times scaled sprite is in comparision to the og
 	/// </summary>
 	public Vector2 Scale { get; set; } = Vector2.One;
+
+    /// <summary>
+    /// Specifies the depth at which the texture is rendered. Textures with a higher layer depth value are drawn on top of those with a lower layer depth value.Note: This value will only apply when using SpriteSortMode.FrontToBack or SpriteSortMode.BackToFront.
+	/// </summary>
 	public float LayerDepth { get; set; } = 0.0f;
 	public SpriteEffects SpriteEffects { get; set; } = SpriteEffects.None;
 	
@@ -45,6 +49,14 @@ public class Sprite
 		get
 		{
 			return TextureRegion.GetRectHeight() * Scale.Y;
+		}
+	}
+
+	public Vector2 Size
+	{
+		get
+		{
+			return new Vector2(Width, Height);
 		}
 	}
 
@@ -76,10 +88,10 @@ public class Sprite
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public Sprite CreateSprite(TextureRegionType type)
-	{
-		TextureRegion textureRegion = AssetsManager.GetInstance().GetRegion(type);
-		return new Sprite(textureRegion);
-	}
+ //   public Sprite CreateSprite(TextureRegionType type)
+	//{
+	//	TextureRegion textureRegion = AssetsManager.GetInstance().GetRegion(type);
+	//	return new Sprite(textureRegion);
+	//}
 }
    

@@ -1,7 +1,9 @@
 ﻿using LanMonoGameLibrary;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Diagnostics;
 
 namespace Pong;
 
@@ -12,8 +14,10 @@ public class MyGame : Core
     private InputManager inputManager;
     private Texture2D spriteSheet;
     private Sprite[] sprites;
+    private Sprite[] movingSprites;
     private Sprite boardSprite;
     private Vector2 screenRes;
+    private PhysicsManager physicsManager;
 
     public MyGame() : base("Pong", 1280, 720, false)
     {
@@ -25,10 +29,13 @@ public class MyGame : Core
     {
         assetsManager = new AssetsManager(GetContentManager());
         inputManager = new InputManager(); // for now this input manager is exclusive
+        physicsManager = new PhysicsManager();
 
         // scale the board sprite to fit screen
-        boardSprite = AssetsManager.GetInstance().GetSprite(TextureRegionType.Board);
-        ScaleToFitScreen(screenRes);
+        boardSprite = assetsManager.GetSprite(0);
+
+        // called once scale the board to fit screen whenever application starts
+        ScaleBoardToFitScreen(screenRes);
 
         base.Initialize();
     }
@@ -38,13 +45,16 @@ public class MyGame : Core
         spriteSheet = assetsManager.GetSpriteSheet();
 
         sprites = assetsManager.GetSprites();
+
+        movingSprites = assetsManager.GetMovingSprites();
     }
 
     // Game loop logic
     protected override void Update(GameTime gameTime)
     {
         inputManager.UpdateInput();
-
+        physicsManager.UpdatePhysics(gameTime);
+        //Debug.WriteLine(physicsManager.TestElapsedGameTime(gameTime));
         base.Update(gameTime);
     }
 
@@ -53,12 +63,23 @@ public class MyGame : Core
     {
         GetGraphicsDevice().Clear(Color.CornflowerBlue);
 
-        SpriteBatch.Begin(transformMatrix: SpriteScaleMatrix);
+        // SpriteSortMode.FrontToBack, if layer depth = 1 then object is rendered on top of objects with layer depth = 0
+        // SpriteSortMode.BackToFront, if layer depth = 0 then object is rendered on top of objects with layer depth = 1
+        SpriteBatch.Begin(SpriteSortMode.FrontToBack, transformMatrix: SpriteScaleMatrix);
         //SpriteBatch.Draw(spriteSheet, Vector2.Zero, Color.White);
-        foreach (var sprite in sprites)
+
+        // draw sprites of moving objects
+        for (int i = 0; i < movingSprites.Length; i++)
         {
-            sprite.Draw(SpriteBatch, Vector2.Zero);
+            movingSprites[i].Draw(SpriteBatch, physicsManager.GetPosition(i));
         }
+        
+        // draw sprites of non-moving objects
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            sprites[i].Draw(SpriteBatch, physicsManager.GetStaticPosition(i));
+        }
+
         SpriteBatch.End();
         
         // Draw debug UI
@@ -70,7 +91,7 @@ public class MyGame : Core
     }
 
     //----------------------------------PRIVATE METHODS----------------------------------------------
-    private void ScaleToFitScreen(Vector2 targetRes)
+    private void ScaleBoardToFitScreen(Vector2 targetRes)
     {
         Vector2 currentRes = Core.GetInstance().GetScreenResolution();
 

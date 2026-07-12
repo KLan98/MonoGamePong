@@ -2,7 +2,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-public class EntityRender
+public struct SquareCollider
 {
-    public bool Visible;
+	public SquareCollider()
+	{
+	}
 }

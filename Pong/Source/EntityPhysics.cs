@@ -4,11 +4,11 @@ using Microsoft.Xna.Framework.Input;
 
 public class EntityPhysics
 {
-	public Vector2 Position;
-	public Vector2 Direction;
-	public Vector2 Velocity;
+	public Vector2 Position; // position on the screen
+	public Vector2 Direction; // direction of movement
+	public float Velocity; // average velocity
 
-	public EntityPhysics(Vector2 position, Vector2 direction, Vector2 velocity)
+	public EntityPhysics(Vector2 position, Vector2 direction, float velocity)
 	{
 		Position = position;
 		Direction = direction;
