@@ -96,7 +96,7 @@ public class PhysicsManager
             
         }
 
-        CircleCollider ballCollider = new CircleCollider(sizeVector[5].X, movingPhysics[2].Position.X, movingPhysics[2].Position.Y);
+        Circle ballCollider = new Circle(sizeVector[5].X, movingPhysics[2].Position.X, movingPhysics[2].Position.Y);
 
         Debug.WriteLine($"ball collider {ballCollider.Radius}, {ballCollider.Position}");
 
