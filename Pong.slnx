@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="../../../Desktop/MonoGame.ImGuiNet-main/MonoGame.ImGuiNet/Monogame.ImGuiNet.csproj" />
+  <Project Path="MonoGame.ImGuiNet-main/MonoGame.ImGuiNet/Monogame.ImGuiNet.csproj" />
   <Project Path="Pong/Pong.csproj" />
 </Solution>
