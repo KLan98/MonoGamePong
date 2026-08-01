@@ -2,22 +2,27 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Diagnostics;
 
 public class PhysicsManager
 {
-    private float maxVelocity = 10f;
+    private float maxVelocity = 180f;
     private EntityPhysics[] movingPhysics;
     private Vector2[] staticPositions;
     private static PhysicsManager instance;
     private Vector2[] sizeVector;
+    private Core core;
+
+    private float[] easingTimeElapsed = new float[3]; // easing time elapsed for every moving entities 
+    private float easeDuration = 3; // time it takes to reach max speed
 
     public PhysicsManager()
     {
         AssetsManager assetsManager = AssetsManager.GetInstance();
         sizeVector = assetsManager.GetSizeVector();
-        
-        Core core = Core.GetInstance();
+
+        core = Core.GetInstance();
         Vector2 screenRes = core.GetScreenResolution();
 
         // init physical fields of all entities
@@ -27,7 +32,7 @@ public class PhysicsManager
         Vector2 comIntPos = new Vector2 { X = screenRes.X - sizeVector[4].X, Y = playerInitPos.Y };
         EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero, 0f);
 
-        Vector2 ballInitPos = new Vector2 { X = screenRes.X / 2, Y = screenRes.Y/ 2 };
+        Vector2 ballInitPos = new Vector2 { X = screenRes.X / 2, Y = screenRes.Y / 2 };
         EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero, 0f);
 
         // Init positions of non-moving objects
@@ -88,39 +93,41 @@ public class PhysicsManager
     {
         for (int i = 0; i < movingPhysics.Length; i++)
         {
-            float displacement = movingPhysics[i].Velocity * gameTime.ElapsedGameTime.Milliseconds / 1000f;
-            movingPhysics[i].Position += displacement * movingPhysics[i].Direction; // update position
-            //Debug.WriteLine($"Position player = {movingPhysics[0].Position}");
+            float currentVelocity = movingPhysics[i].Velocity;
+            Vector2 direction = movingPhysics[i].Direction;
 
-            // update collision
-            
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            // increase easing time
+            easingTimeElapsed[i] += deltaTime;
+
+            // easing time so far / total ease duration, clamp it so that it won't exceed 1.0f
+            float normalizedElapsed = MathF.Min(1.0f, easingTimeElapsed[i] / easeDuration);
+
+            // Easing function use normalized time as input 
+            float easedTime = core.EaseInQuad(normalizedElapsed);
+
+            // lerp between current velocity and max velocity, eased time as input, clamped between current velocity and max velocity
+            float easedVelocity = MathHelper.Lerp(currentVelocity, maxVelocity, easedTime);
+
+            float displacement = easedVelocity * deltaTime;
+
+            Vector2 movedDistance = displacement * direction;
+
+            // update position and velocity
+            movingPhysics[i].Position += movedDistance;
+            movingPhysics[i].Velocity = easedVelocity;
         }
-
-        Circle ballCollider = new Circle(sizeVector[5].X, movingPhysics[2].Position.X, movingPhysics[2].Position.Y);
-
-        Debug.WriteLine($"ball collider {ballCollider.Radius}, {ballCollider.Position}");
 
         // create a new circle collision every physics update
-        //CircleCollider ballCollider = new CircleCollider(ball, movingPhysics[i].Position.X, movingPhysics[i].Position.Y);
-
+        Circle ballCollider = new Circle(sizeVector[5].X, movingPhysics[2].Position.X, movingPhysics[2].Position.Y);
     }
 
-    /// <summary>
-    /// Update velocity for entity with index 
-    /// </summary>
-    /// <param name="index"></param>
-    public void UpdateVelocity(int index)
-    {
-        if (movingPhysics[index].Velocity < maxVelocity)
-        {
-            // LAN_TODO: check if there is a way to use ease in for this or should it be used for position?
-            movingPhysics[index].Velocity = Core.GetInstance().EaseOutCubic(movingPhysics[index].Velocity + 1);
-        }
-    }
-
-    public void ResetVelocity(int index)
+    public void MovingStop(int index)
     {
         movingPhysics[index].Velocity = 0;
+        movingPhysics[index].Direction = Vector2.Zero;
+        easingTimeElapsed[index] = 0;
     }
 
     //public string TestElapsedGameTime(GameTime gameTime)

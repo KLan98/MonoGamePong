@@ -28,8 +28,8 @@ public class MyGame : Core
     protected override void Initialize()
     {
         assetsManager = new AssetsManager(GetContentManager());
-        inputManager = new InputManager(); // for now this input manager is exclusive
         physicsManager = new PhysicsManager();
+        inputManager = new InputManager(); // for now this input manager is exclusive
 
         // scale the board sprite to fit screen
         boardSprite = assetsManager.GetSprite(0);
