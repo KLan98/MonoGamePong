@@ -91,7 +91,7 @@ public class AssetsManager
         // Create sprites from texture regions
         Sprite ballSprite = new Sprite(ball);
         ballSprite.LayerDepth = 1.0f;
-        ballSprite.CenterOrigin();
+        //ballSprite.CenterOrigin(); needed for circle collider, currently using rect collider
 
         Sprite ballMotionSprite = new Sprite(ballMotion);
         ballMotionSprite.LayerDepth = 1.0f;
@@ -126,6 +126,7 @@ public class AssetsManager
             ballSprite
         };
 
+        // LAN_TODO need to revamp this, need a simpler way to access sprite size 
         sizeVector = new Vector2[6]
         {
             boardSprite.Size,
