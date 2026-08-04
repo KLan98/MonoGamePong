@@ -62,7 +62,7 @@ public class PhysicsManager
         }
         instance = this;
 
-        ballPhysics.Direction = new Vector2(-1, 0);
+        ballPhysics.Direction = new Vector2(1, 0);
     }
 
     public static PhysicsManager GetInstance()
@@ -93,12 +93,14 @@ public class PhysicsManager
     // called in game-logic-update
     public void UpdatePhysics(GameTime gameTime)
     {
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        int screenWidth = (int)core.GetScreenResolution().X;
+        int screenHeight = (int)core.GetScreenResolution().Y;
+
         for (int i = 0; i < movingPhysics.Length; i++)
         {
             float speed = movingPhysics[i].Speed;
             Vector2 direction = movingPhysics[i].Direction;
-
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             // increase easing time
             easingTimeElapsed[i] += deltaTime;
@@ -122,29 +124,54 @@ public class PhysicsManager
         }
 
         // create a new circle collision every physics update
-        //Circle ballCollider = new Circle(sizeVector[5].X, movingPhysics[2].Position.X, movingPhysics[2].Position.Y);
+        // LAN_TODO remove magic index problem 
         Rectangle ballCollider = new Rectangle((int)movingPhysics[2].Position.X, (int)movingPhysics[2].Position.Y, (int)sizeVector[5].X, (int)sizeVector[5].Y);
         //Debug.WriteLine($"ball position {movingPhysics[2].Position}"); 
-        Debug.WriteLine($"{ballCollider} created at {ballCollider.Location}");
+        //Debug.WriteLine($"{ballCollider} created at {ballCollider.Location}");
 
-        Rectangle rectCollider = new Rectangle((int)movingPhysics[0].Position.X, (int)movingPhysics[0].Position.Y, (int)sizeVector[3].X, (int)sizeVector[3].Y);
-        Debug.WriteLine($"----{rectCollider} created at {rectCollider.Location}");
+        Rectangle topCollider = new Rectangle(0, 0, screenWidth, 1);
+        Rectangle botCollider = new Rectangle(0, screenHeight, screenWidth, 1);
+        Rectangle leftCollider = new Rectangle(0, 0, 1, screenHeight);
+        Rectangle rightCollider = new Rectangle(screenWidth, 0, 0, screenHeight);
 
-        if (ballCollider.Intersects(rectCollider))
+        // LAN_TODO: implement collision responses 
+        // ballCollider collision responses
+        if (ballCollider.Intersects(topCollider) || ballCollider.Intersects(botCollider))
         {
-            Debug.WriteLine($"-------------------------{rectCollider}, info at intersect {rectCollider.Left}, {rectCollider.Right}, {rectCollider.Top}, {rectCollider.Bottom} collides with {ballCollider}, info at intersect {ballCollider.Left}, {ballCollider.Right}, {ballCollider.Top}, {ballCollider.Bottom}");
+            // blocking and bounce collision response
         }
 
-        if (ballCollider.Location.X <= 0)
+        else if (ballCollider.Intersects(rightCollider))
         {
-
-            Debug.WriteLine($"-------------------------{rectCollider}, info {rectCollider.Left}, {rectCollider.Right}, {rectCollider.Top}, {rectCollider.Bottom} does not collide with {ballCollider}, info {ballCollider.Left}, {ballCollider.Right}, {ballCollider.Top}, {ballCollider.Bottom}");
+            // increase player point
+            Debug.WriteLine($"------------Player gained point");
         }
 
-        //for (int i = 0; i < 2; i++)
-        //{
-        //    Rectangle rectCollider = new Rectangle((int)movingPhysics[i].Position.X, (int)movingPhysics[i].Position.Y, (int)sizeVector[1].X, (int)sizeVector[1].Y);
-        //}
+        else if (ballCollider.Intersects(leftCollider))
+        {
+            // increase com point
+            Debug.WriteLine($"------------Com gained point");
+        }
+
+        // for player and com
+        for (int i = 0; i < 2; i++)
+        {
+            Rectangle rectCollider = new Rectangle((int)movingPhysics[i].Position.X, (int)movingPhysics[i].Position.Y, (int)sizeVector[3].X, (int)sizeVector[3].Y);
+
+            // if ball collides with player or com
+            if (rectCollider.Intersects(ballCollider))
+            {
+                //Debug.WriteLine($"-------------------------{rectCollider}, info at intersect {rectCollider.Left}, {rectCollider.Right}, {rectCollider.Top}, {rectCollider.Bottom} collides with {ballCollider}, info at intersect {ballCollider.Left}, {ballCollider.Right}, {ballCollider.Top}, {ballCollider.Bottom}");
+                // blocking and bounce collision response
+            }
+
+            // if player or com collides with either top or bottom bounds
+            if (rectCollider.Intersects(topCollider) || rectCollider.Intersects(botCollider))
+            {
+                //Debug.WriteLine($"-------------------------{rectCollider}, info at intersect {rectCollider.Left}, {rectCollider.Right}, {rectCollider.Top}, {rectCollider.Bottom} collides with {topCollider}, info at intersection {topCollider.Left}, {topCollider.Right}, {topCollider.Top}, {topCollider.Bottom}");
+                // blocking collision response
+            }
+        }
     }
 
     public void MovingStop(int index)
