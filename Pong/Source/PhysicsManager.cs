@@ -62,7 +62,7 @@ public class PhysicsManager
         }
         instance = this;
 
-        ballPhysics.Direction = new Vector2(1, 0);
+        ballPhysics.Direction = new Vector2(-1, 0);
     }
 
     public static PhysicsManager GetInstance()
@@ -136,9 +136,18 @@ public class PhysicsManager
 
         // LAN_TODO: implement collision responses 
         // ballCollider collision responses
-        if (ballCollider.Intersects(topCollider) || ballCollider.Intersects(botCollider))
+        Vector2 normal = Vector2.Zero; // normal used for calculating reflection vector
+
+        if (ballCollider.Intersects(topCollider))
         {
             // blocking and bounce collision response
+            normal = Vector2.UnitY;
+        }
+
+        else if (ballCollider.Intersects(botCollider))
+        {
+            // blocking and bouncing collision response
+            normal = -Vector2.UnitY;
         }
 
         else if (ballCollider.Intersects(rightCollider))
@@ -163,6 +172,20 @@ public class PhysicsManager
             {
                 //Debug.WriteLine($"-------------------------{rectCollider}, info at intersect {rectCollider.Left}, {rectCollider.Right}, {rectCollider.Top}, {rectCollider.Bottom} collides with {ballCollider}, info at intersect {ballCollider.Left}, {ballCollider.Right}, {ballCollider.Top}, {ballCollider.Bottom}");
                 // blocking and bounce collision response
+
+                // if ball hits player
+                if (rectCollider.X == 0)
+                {
+                    Debug.WriteLine("Ball hit player");
+                    normal = Vector2.UnitX;
+                }
+
+                // if ball hits com
+                else
+                {
+                    Debug.WriteLine("Ball hit com");
+                    normal = -Vector2.UnitX;
+                }
             }
 
             // if player or com collides with either top or bottom bounds
@@ -172,6 +195,9 @@ public class PhysicsManager
                 // blocking collision response
             }
         }
+
+        // Update direction of ball
+        movingPhysics[2].Direction = Vector2.Reflect(movingPhysics[2].Direction, normal);
     }
 
     public void MovingStop(int index)
