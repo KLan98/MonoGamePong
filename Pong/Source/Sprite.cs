@@ -21,7 +21,7 @@ public class Sprite
     public Vector2 Origin { get; set; } = Vector2.Zero;
 
 	/// <summary>
-	/// How many times scaled sprite is in comparision to the og
+	/// How many times scaled sprite is in comparison to the og
 	/// </summary>
 	public Vector2 Scale { get; set; } = Vector2.One;
 

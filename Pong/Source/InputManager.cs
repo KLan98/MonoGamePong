@@ -47,14 +47,14 @@ public class InputManager
                 physicsManager.SetDirection(0, up);
             }
 
-            Debug.WriteLine($"Speed of player {physicsManager.GetEntityPhysics(0).Speed}");
+            Debug.WriteLine($"Velocity  {physicsManager.GetEntityPhysics(0).Velocity}");
         }
         else if (newState.IsKeyUp(Keys.Up))
         {
             if (oldState.IsKeyDown(Keys.Up))
             {
                 physicsManager.MovingStop(0);
-                Debug.WriteLine($"Speed of player {physicsManager.GetEntityPhysics(0).Speed}");
+                Debug.WriteLine($"Velocity  {physicsManager.GetEntityPhysics(0).Velocity}");
             }
         }
 
@@ -66,14 +66,14 @@ public class InputManager
                 physicsManager.SetDirection(0, down);
             }
 
-            Debug.WriteLine($"Speed of player {physicsManager.GetEntityPhysics(0).Speed}");
+            Debug.WriteLine($"Velocity   {physicsManager.GetEntityPhysics(0).Velocity}");
         }
         else if (newState.IsKeyUp(Keys.Down))
         {
             if (oldState.IsKeyDown(Keys.Down))
             {
                 physicsManager.MovingStop(0);
-                Debug.WriteLine($"Speed of player {physicsManager.GetEntityPhysics(0).Speed}");
+                Debug.WriteLine($"Velocity   {physicsManager.GetEntityPhysics(0).Velocity}");
             }
         }
 

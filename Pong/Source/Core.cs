@@ -110,7 +110,7 @@ public class Core : Game
     {
         float scaleX = graphicsDeviceManager.PreferredBackBufferWidth / 1280f;
         float scaleY = graphicsDeviceManager.PreferredBackBufferHeight / 720f;
-        SpriteScaleMatrix = Matrix.CreateScale(scaleX, scaleY, 1f);
+         SpriteScaleMatrix = Matrix.CreateScale(scaleX, scaleY, 1f);
     }
 
     /// <summary>

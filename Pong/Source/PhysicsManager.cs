@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
+using System.Runtime.Intrinsics.X86;
 
 public class PhysicsManager
 {
@@ -11,25 +12,28 @@ public class PhysicsManager
     private EntityPhysics[] movingPhysics;
     private Vector2[] staticPositions;
     private static PhysicsManager instance;
-    private Vector2[] sizeVector;
     private Core core;
     private Rectangle[] rectColliders;
     private float[] easingTimeElapsed = new float[3]; // easing time elapsed for every moving entities 
     private float easeDuration = 2; // time it takes to reach max speed
+    private Sprite[] movingSprites = new Sprite[3];
+    private Sprite[] sprites = new Sprite[3];
+    private Vector2[] initPos = new Vector2[3];
 
     public PhysicsManager()
     {
         AssetsManager assetsManager = AssetsManager.GetInstance();
-        sizeVector = assetsManager.GetSizeVector();
+        movingSprites = assetsManager.GetMovingSprites();
+        sprites = assetsManager.GetSprites();
 
         core = Core.GetInstance();
         Vector2 screenRes = core.GetScreenResolution();
 
         // init physics objects 
-        Vector2 playerInitPos = new Vector2 { X = 0, Y = screenRes.Y / 2 - sizeVector[3].Y / 2 };
+        Vector2 playerInitPos = new Vector2 { X = 0, Y = screenRes.Y / 2 - movingSprites[0].Size.Y / 2 };
         EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero);
 
-        Vector2 comIntPos = new Vector2 { X = screenRes.X - sizeVector[4].X, Y = playerInitPos.Y };
+        Vector2 comIntPos = new Vector2 { X = screenRes.X - movingSprites[1].Size.X, Y = playerInitPos.Y };
         EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero);
 
         Vector2 ballInitPos = new Vector2 { X = screenRes.X / 2, Y = screenRes.Y / 2 };
@@ -38,7 +42,7 @@ public class PhysicsManager
         // Init positions of non-moving objects
         Vector2 boardInitPos = Vector2.Zero;
         Vector2 playerScoreBarInitPos = Vector2.Zero;
-        Vector2 comScoreBarInitPos = new Vector2 { X = screenRes.X - sizeVector[2].X, Y = 0 };
+        Vector2 comScoreBarInitPos = new Vector2 { X = screenRes.X - sprites[2].Size.X, Y = 0 };
 
         // should be synced with sprites array in asset manager
         staticPositions = new Vector2[3]
@@ -62,7 +66,9 @@ public class PhysicsManager
         }
         instance = this;
 
-        ballPhysics.Direction = new Vector2(-1, 0);
+        //ballPhysics.Direction = new Vector2(-1, 0);
+        //ballPhysics.Direction = new Vector2(-1, 0);
+        ballPhysics.Direction = new Vector2(0.1f, 0.3f);
     }
 
     public static PhysicsManager GetInstance()
@@ -97,13 +103,29 @@ public class PhysicsManager
         int screenWidth = (int)core.GetScreenResolution().X;
         int screenHeight = (int)core.GetScreenResolution().Y;
 
+        // Updated based on screen resolution
+        Rectangle topCollider = new Rectangle(0, 0, screenWidth, 1);
+        Rectangle botCollider = new Rectangle(0, screenHeight, screenWidth, 1);
+        Rectangle leftCollider = new Rectangle(0, 0, 1, screenHeight);
+        Rectangle rightCollider = new Rectangle(screenWidth, 0, 0, screenHeight);
+
+        Vector2 normal = Vector2.Zero; // normal used for calculating reflection vector
+
+        rectColliders = new Rectangle[movingPhysics.Length];
+
         for (int i = 0; i < movingPhysics.Length; i++)
         {
-            float speed = movingPhysics[i].Speed;
-            Vector2 direction = movingPhysics[i].Direction;
+            rectColliders[i] = new Rectangle((int)movingPhysics[i].Position.X, (int)movingPhysics[i].Position.Y, (int)movingSprites[i].Size.X, (int)movingSprites[i].Size.Y);
+            Vector2 currentPosition = movingPhysics[i].Position; // store the current position
 
-            // increase easing time
-            easingTimeElapsed[i] += deltaTime;
+            Vector2 direction = movingPhysics[i].Direction;
+            float currentSpeed = movingPhysics[i].Speed;
+
+            // increase easing time only when moving
+            if (movingPhysics[i].Direction != Vector2.Zero)
+            {
+                easingTimeElapsed[i] += deltaTime;
+            }
 
             // easing time so far / total ease duration, clamp it so that it won't exceed 1.0f
             float normalizedElapsed = MathF.Min(1.0f, easingTimeElapsed[i] / easeDuration);
@@ -112,88 +134,60 @@ public class PhysicsManager
             float easedTime = core.EaseInQuad(normalizedElapsed);
 
             // lerp between current speed and max speed, eased time as input, clamped between current speed and max speed
-            float easedSpeed = MathHelper.Lerp(speed, maxSpeed, easedTime);
+            float easedSpeed = MathHelper.Lerp(currentSpeed, maxSpeed, easedTime);
 
             float displacement = easedSpeed * deltaTime;
 
             Vector2 movedDistance = displacement * direction;
+            Vector2 velocity = easedSpeed * direction; // speed * direction
 
-            // update position and speed
+            // if player or com collides with either top or bottom bounds
+            if (i < 2)
+            {
+                if (rectColliders[i].Intersects(botCollider) || rectColliders[i].Intersects(topCollider))
+                {
+                    // blocking collision response
+                    movingPhysics[i].Position = currentPosition; // assign new position = stored position
+                    MovingStop(i);
+                }
+            }
+
             movingPhysics[i].Position += movedDistance;
+            movingPhysics[i].Velocity = velocity;
             movingPhysics[i].Speed = easedSpeed;
         }
 
-        // create a new circle collision every physics update
-        // LAN_TODO remove magic index problem 
-        Rectangle ballCollider = new Rectangle((int)movingPhysics[2].Position.X, (int)movingPhysics[2].Position.Y, (int)sizeVector[5].X, (int)sizeVector[5].Y);
-        //Debug.WriteLine($"ball position {movingPhysics[2].Position}"); 
-        //Debug.WriteLine($"{ballCollider} created at {ballCollider.Location}");
-
-        Rectangle topCollider = new Rectangle(0, 0, screenWidth, 1);
-        Rectangle botCollider = new Rectangle(0, screenHeight, screenWidth, 1);
-        Rectangle leftCollider = new Rectangle(0, 0, 1, screenHeight);
-        Rectangle rightCollider = new Rectangle(screenWidth, 0, 0, screenHeight);
-
-        // LAN_TODO: implement collision responses 
-        // ballCollider collision responses
-        Vector2 normal = Vector2.Zero; // normal used for calculating reflection vector
-
-        if (ballCollider.Intersects(topCollider))
+        // if ball collides with player or com
+        if (rectColliders[2].Intersects(rectColliders[1]))
         {
-            // blocking and bounce collision response
+            normal = Vector2.UnitX;
+        }
+
+        else if (rectColliders[2].Intersects(rectColliders[0]))
+        {
+            normal = -Vector2.UnitX;
+        }
+
+        else if (rectColliders[2].Intersects(topCollider))
+        {
             normal = Vector2.UnitY;
         }
 
-        else if (ballCollider.Intersects(botCollider))
+        else if (rectColliders[2].Intersects(botCollider))
         {
-            // blocking and bouncing collision response
             normal = -Vector2.UnitY;
         }
 
-        else if (ballCollider.Intersects(rightCollider))
+        else if (rectColliders[2].Intersects(leftCollider))
         {
-            // increase player point
-            Debug.WriteLine($"------------Player gained point");
+            Debug.WriteLine("Enemy scored");
+            // increment point
         }
 
-        else if (ballCollider.Intersects(leftCollider))
+        else if (rectColliders[2].Intersects(rightCollider))
         {
-            // increase com point
-            Debug.WriteLine($"------------Com gained point");
-        }
-
-        // for player and com
-        for (int i = 0; i < 2; i++)
-        {
-            Rectangle rectCollider = new Rectangle((int)movingPhysics[i].Position.X, (int)movingPhysics[i].Position.Y, (int)sizeVector[3].X, (int)sizeVector[3].Y);
-
-            // if ball collides with player or com
-            if (rectCollider.Intersects(ballCollider))
-            {
-                //Debug.WriteLine($"-------------------------{rectCollider}, info at intersect {rectCollider.Left}, {rectCollider.Right}, {rectCollider.Top}, {rectCollider.Bottom} collides with {ballCollider}, info at intersect {ballCollider.Left}, {ballCollider.Right}, {ballCollider.Top}, {ballCollider.Bottom}");
-                // blocking and bounce collision response
-
-                // if ball hits player
-                if (rectCollider.X == 0)
-                {
-                    Debug.WriteLine("Ball hit player");
-                    normal = Vector2.UnitX;
-                }
-
-                // if ball hits com
-                else
-                {
-                    Debug.WriteLine("Ball hit com");
-                    normal = -Vector2.UnitX;
-                }
-            }
-
-            // if player or com collides with either top or bottom bounds
-            if (rectCollider.Intersects(topCollider) || rectCollider.Intersects(botCollider))
-            {
-                //Debug.WriteLine($"-------------------------{rectCollider}, info at intersect {rectCollider.Left}, {rectCollider.Right}, {rectCollider.Top}, {rectCollider.Bottom} collides with {topCollider}, info at intersection {topCollider.Left}, {topCollider.Right}, {topCollider.Top}, {topCollider.Bottom}");
-                // blocking collision response
-            }
+            Debug.WriteLine("Player scored");
+            // increment point
         }
 
         // Update direction of ball
@@ -221,5 +215,54 @@ public class PhysicsManager
     {
         // only handle the assigning of data, no rendering included 
         staticPositions[index] = newPos;
+    }
+
+    public Rectangle GetColliderInfo(int index)
+    {
+        if (rectColliders == null)
+        {
+            return new Rectangle(0, 0, 0, 0);
+        }
+
+        return rectColliders[index];
+    }
+
+    // set an entity to its init position
+    public void ResetPosition(int index)
+    {
+        // get the current screen res
+        Vector2 screenRes = core.GetScreenResolution();
+        Debug.WriteLine($"{screenRes}");
+        MovingStop(index);
+
+        // set init pos
+        switch (index)
+        {
+            case (int)MovingEntities.Player:
+                movingPhysics[index].Position = new Vector2 { X = 0, Y = screenRes.Y / 2 - movingSprites[0].Size.Y / 2 };
+                break;
+
+            case (int)MovingEntities.Com:
+                movingPhysics[index].Position = new Vector2 { X = screenRes.X - movingSprites[1].Size.X, Y = screenRes.Y / 2 - movingSprites[1].Size.Y / 2 };
+                break;
+
+            case (int)MovingEntities.Ball:
+                movingPhysics[index].Position = new Vector2 { X = screenRes.X / 2, Y = screenRes.Y / 2 };
+                break;
+        }
+    }
+
+    public enum MovingEntities
+    {
+        Player,
+        Com,
+        Ball
+    }
+
+    public enum StaticEntities
+    {
+        Board,
+        PlayerScoreBar,
+        ComScoreBar
     }
 }

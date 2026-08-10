@@ -6,6 +6,7 @@ public class EntityPhysics
 {
 	public Vector2 Position; // position on the screen
 	public Vector2 Direction; // direction of movement
+	public Vector2 Velocity;
 	public float Speed;
 
 	public EntityPhysics(Vector2 position, Vector2 direction)

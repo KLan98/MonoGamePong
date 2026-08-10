@@ -3,10 +3,10 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
 using MonoGame.ImGuiNet;
 using System.Diagnostics;
 using LanMonoGameLibrary;
+using System;
 
 public class DebugConsole
 {
@@ -16,13 +16,21 @@ public class DebugConsole
     //--------------------------------------FIELDS--------------------------------------
     private string[] resolutionPresets = new string[] { "1920x1080", "1280x720", "800x600" };
     private Vector2[] resolutions = new Vector2[] { new Vector2 { X = 1920, Y = 1080 }, new Vector2 { X = 1280, Y = 720 }, new Vector2 { X = 800, Y = 600 } };
-    private int currentResolution = 1;
+    private int currentResolution = 1; // default is 720p
     private bool fullScreen = false;
     private GraphicsDeviceManager graphicsDeviceManager;
+    private PhysicsManager physicsManager;
+    private PhysicsManager.MovingEntities[] movingEntities;
+    private PhysicsManager.StaticEntities[] staticEntities;
+    private ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags.DefaultOpen;
+    private System.Numerics.Vector2 debugConsoleSize;
 
     public DebugConsole(GraphicsDeviceManager graphicsDeviceManager)
     {
         this.graphicsDeviceManager = graphicsDeviceManager;
+        physicsManager = PhysicsManager.GetInstance();
+        movingEntities = Enum.GetValues<PhysicsManager.MovingEntities>();
+        staticEntities = Enum.GetValues<PhysicsManager.StaticEntities>();
     }
 
     public void Initialize(Game game)
@@ -33,14 +41,89 @@ public class DebugConsole
 
     public void UpdateDraw(bool toolActive)
     {
+        // width and height of game window
+        int screenWidth = graphicsDeviceManager.PreferredBackBufferWidth;
+        int screenHeight = graphicsDeviceManager.PreferredBackBufferHeight;
+
+        // resize the debug window
+        debugConsoleSize = new System.Numerics.Vector2(screenWidth / 1.5f, screenHeight * 2 / 3);
+
+        System.Numerics.Vector2 childSize = new System.Numerics.Vector2(debugConsoleSize.X - 20.0f, debugConsoleSize.Y) / 2;
+
+        System.Numerics.Vector2 buttonSize = new System.Numerics.Vector2(childSize.X, debugConsoleSize.Y / 10);
+
         if (toolActive)
         {
+            ImGui.SetNextWindowSize(debugConsoleSize); // set the next window size (debug console in this case)
 
-            ImGui.Begin("Debug Console", ref toolActive, ImGuiWindowFlags.MenuBar);
+            ImGui.Begin("Debug Console", ref toolActive, ImGuiWindowFlags.MenuBar); // begin the window "debug console"
+
+            ImGui.BeginChild("Entities debug info", childSize, ImGuiChildFlags.FrameStyle);
+            if (ImGui.CollapsingHeader("Moving entities", flags))
+            {
+                for (int i = 0; i < movingEntities.Length; i++)
+                {
+                    ImGui.TextWrapped($"---------------Entity name {movingEntities[i]}--------------");
+                    ImGui.TextWrapped($"Speed {physicsManager.GetEntityPhysics(i).Speed}");
+                    ImGui.TextWrapped($"Velocity {physicsManager.GetEntityPhysics(i).Velocity}");
+                    ImGui.TextWrapped($"Current position {physicsManager.GetEntityPhysics(i).Position}");
+                    ImGui.TextWrapped($"Current direction {physicsManager.GetEntityPhysics(i).Direction}");
+                    ImGui.TextWrapped($"Collider information {physicsManager.GetColliderInfo(i)}");
+                }
+            }
+
+            if (ImGui.CollapsingHeader("Static entities"))
+            {
+                // debug information
+                for (int i = 0; i < staticEntities.Length; i++)
+                {
+                    ImGui.TextWrapped($"---------------Entity name {staticEntities[i].ToString()}--------------");
+                    ImGui.TextWrapped($"Current position {physicsManager.GetStaticPosition(i)}");
+                }
+            }
+
+            if (ImGui.CollapsingHeader("Board colliders "))
+            {
+                // debug information
+                Rectangle topCollider = new Rectangle(0, 0, graphicsDeviceManager.PreferredBackBufferWidth, 1);
+                Rectangle botCollider = new Rectangle(0, screenHeight, screenWidth, 1);
+                Rectangle leftCollider = new Rectangle(0, 0, 1, screenHeight);
+                Rectangle rightCollider = new Rectangle(screenWidth, 0, 0, screenHeight);
+                ImGui.TextWrapped($"Top collider {topCollider}");
+                ImGui.TextWrapped($"Bot collider {botCollider}");
+                ImGui.TextWrapped($"Left collider {leftCollider}");
+                ImGui.TextWrapped($"Right collider {rightCollider}");
+            }
+            ImGui.EndChild();
+
+            ImGui.SameLine();
+
+            ImGui.BeginChild("Output window", childSize, ImGuiChildFlags.Border);
+            if (ImGui.CollapsingHeader("Output window"))
+            {
+                // debug information
+
+            }
+
+            ImGui.EndChild();
+
+            // Buttons
+            if (ImGui.Button("Reset ball position", buttonSize))
+            {
+                physicsManager.ResetPosition((int)PhysicsManager.MovingEntities.Ball);
+            }
+
+            if (ImGui.Button("Reset ball position", buttonSize))
+            {
+
+            }
+
+            // Menu bar
             if (ImGui.BeginMenuBar())
             {
                 ImGui.Text($"FPS {ImGui.GetIO().Framerate}");
                 ImGui.Text($"Frame time {ImGui.GetIO().DeltaTime}");
+
                 if (ImGui.BeginMenu("UI Settings"))
                 {
                     if (ImGui.BeginCombo("Resolution", resolutionPresets[currentResolution]))
@@ -54,8 +137,8 @@ public class DebugConsole
                                 currentResolution = i; // selection changed, only runs if a res is chosen
                                 graphicsDeviceManager.PreferredBackBufferWidth = (int)resolutions[i].X;
                                 graphicsDeviceManager.PreferredBackBufferHeight = (int)resolutions[i].Y;
-                                graphicsDeviceManager.ApplyChanges();
                                 Core.GetInstance().UpdateScaleMatrix();
+                                graphicsDeviceManager.ApplyChanges();
                                 Debug.WriteLine($"Resolution {resolutions[i].X}x{resolutions[i].Y} selected");
                             }
                         }
@@ -72,23 +155,25 @@ public class DebugConsole
 
                 if (ImGui.BeginMenu("Gameplay Settings"))
                 {
-                    if (ImGui.TreeNodeEx("Player"))
+                    // Adaptable per game
+                    for (int i = 0; i < movingEntities.Length; i++)
                     {
-                        ImGui.Text("Content for Child regions");
-                        ImGui.TreePop();
+                        if (ImGui.TreeNodeEx($"{movingEntities[i].ToString()}"))
+                        {
+                            // implementation here
+                            ImGui.Text("Content for Child regions");
+
+                            ImGui.TreePop();
+                        }
                     }
 
-                    if (ImGui.TreeNodeEx("Com"))
-                    {
-                        ImGui.Text("Content for Child regions");
-                        ImGui.TreePop();
-                    }
-                    
                     ImGui.EndMenu();
                 }
                 ImGui.EndMenuBar();
             }
             ImGui.End();
         }
+
+        float remainingWidth = ImGui.GetContentRegionAvail().X;
     }
 }

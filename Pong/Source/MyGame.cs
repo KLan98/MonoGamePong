@@ -12,7 +12,7 @@ public class MyGame : Core
     //--------------------------------FIELDS-------------------------------------------
     private AssetsManager assetsManager;
     private InputManager inputManager;
-    private Texture2D spriteSheet;
+    //private Texture2D spriteSheet;
     private Sprite[] sprites;
     private Sprite[] movingSprites;
     private Sprite boardSprite;
@@ -42,7 +42,7 @@ public class MyGame : Core
 
     protected override void LoadContent()
     {
-        spriteSheet = assetsManager.GetSpriteSheet();
+        //spriteSheet = assetsManager.GetSpriteSheet();
 
         sprites = assetsManager.GetSprites();
 

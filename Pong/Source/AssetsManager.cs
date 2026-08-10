@@ -125,16 +125,5 @@ public class AssetsManager
             computerSprite,
             ballSprite
         };
-
-        // LAN_TODO need to revamp this, need a simpler way to access sprite size 
-        sizeVector = new Vector2[6]
-        {
-            boardSprite.Size,
-            playerScoreBarSprite.Size,
-            comScoreBarSprite.Size,
-            playerSprite.Size,
-            computerSprite.Size,
-            ballSprite.Size
-        };
     }
 }
