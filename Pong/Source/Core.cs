@@ -16,11 +16,13 @@ public class Core : Game
     private static Core instance;
     // The graphics pipeline in MonoGame starts with two components: the GraphicsDeviceManager and SpriteBatch.
     private SpriteBatch spriteBatch; // The SpriteBatch optimizes 2D rendering by batching similar draw calls together, improving draw performance when rendering multiple sprites.
-    private GraphicsDeviceManager graphicsDeviceManager; // The GraphicsDeviceManager initializes and manages the connection to the graphics hardware. It handles tasks such as setting the screen resolution, toggling between fullscreen and windowed mode, and managing the GraphicsDevice 
+    private GraphicsDeviceManager graphicsDeviceManager; // The GraphicsDeviceManager initializes and manages the connection to the graphics hardware. It handles tasks such as setting the screen resolution, toggling between fullscreen and windowed mode,  managing the GraphicsDevice and sprite scaling
     private GraphicsDevice graphicsDevice; // the interface between your game and the Graphics Processing Unit (GPU) the game is running on
     private ContentManager contentManager;
     private KeyboardState oldState;
     protected DebugConsole debugConsole;
+    protected const float virtualHeight = 1080f; // this is the resolution for mouse coordinates, sprite positions, UI layout, physics,these stay fixed internally
+    protected const float virtualWidth = 1920f;
 
     //-------------------------------------PROPERTIES-----------------------------------------------------
     public SpriteBatch SpriteBatch
@@ -108,9 +110,9 @@ public class Core : Game
     /// </summary>
     public void UpdateScaleMatrix()
     {
-        float scaleX = graphicsDeviceManager.PreferredBackBufferWidth / 1280f;
-        float scaleY = graphicsDeviceManager.PreferredBackBufferHeight / 720f;
-         SpriteScaleMatrix = Matrix.CreateScale(scaleX, scaleY, 1f);
+        float scaleX = graphicsDeviceManager.PreferredBackBufferWidth / virtualWidth;
+        float scaleY = graphicsDeviceManager.PreferredBackBufferHeight / virtualHeight;
+         SpriteScaleMatrix = Matrix.CreateScale(scaleX, scaleY, 0f);
     }
 
     /// <summary>
@@ -143,6 +145,23 @@ public class Core : Game
     {
         Vector2 res = new Vector2(graphicsDeviceManager.PreferredBackBufferWidth, graphicsDeviceManager.PreferredBackBufferHeight);
         return res;
+    }
+
+    /// <summary>
+    /// Set the rendered resolution of the screen through back buffer
+    /// </summary>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    public void SetScreenResolution(int width, int height)
+    {
+        graphicsDeviceManager.PreferredBackBufferWidth = width;
+        graphicsDeviceManager.PreferredBackBufferHeight = height;
+        graphicsDeviceManager.ApplyChanges();
+    }
+
+    public Vector2 GetVirtualResolution()
+    {
+        return new Vector2(virtualWidth, virtualHeight);
     }
 
     public float EaseOutCubic(float x)

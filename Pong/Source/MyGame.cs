@@ -16,12 +16,10 @@ public class MyGame : Core
     private Sprite[] sprites;
     private Sprite[] movingSprites;
     private Sprite boardSprite;
-    private Vector2 screenRes;
     private PhysicsManager physicsManager;
 
-    public MyGame() : base("Pong", 1280, 720, false)
+    public MyGame() : base("Pong", (int)virtualWidth, (int)virtualHeight, false)
     {
-        screenRes = GetScreenResolution();
     }
 
     // stuffs that are exclusive for pong should be initialize here
@@ -35,7 +33,7 @@ public class MyGame : Core
         boardSprite = assetsManager.GetSprite(0);
 
         // called once scale the board to fit screen whenever application starts
-        ScaleBoardToFitScreen(screenRes);
+        ScaleBoardToFitScreen(GetScreenResolution());
 
         base.Initialize();
     }
@@ -64,7 +62,8 @@ public class MyGame : Core
         GetGraphicsDevice().Clear(Color.CornflowerBlue);
 
         // SpriteSortMode.FrontToBack, if layer depth = 1 then object is rendered on top of objects with layer depth = 0
-        // SpriteSortMode.BackToFront, if layer depth = 0 then object is rendered on top of objects with layer depth = 1
+        // SpriteSortMode.BackToFront, if layer depth = 0 then object is rendered on t
+        // op of objects with layer depth = 1
         SpriteBatch.Begin(SpriteSortMode.FrontToBack, transformMatrix: SpriteScaleMatrix);
         //SpriteBatch.Draw(spriteSheet, Vector2.Zero, Color.White);
 
@@ -93,7 +92,7 @@ public class MyGame : Core
     //----------------------------------PRIVATE METHODS----------------------------------------------
     private void ScaleBoardToFitScreen(Vector2 targetRes)
     {
-        Vector2 currentRes = Core.GetInstance().GetScreenResolution();
+        Vector2 currentRes = GetScreenResolution();
 
         float spriteWidth = boardSprite.Width;
         float spriteHeight = boardSprite.Height;

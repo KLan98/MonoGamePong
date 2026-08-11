@@ -16,7 +16,7 @@ public class DebugConsole
     //--------------------------------------FIELDS--------------------------------------
     private string[] resolutionPresets = new string[] { "1920x1080", "1280x720", "800x600" };
     private Vector2[] resolutions = new Vector2[] { new Vector2 { X = 1920, Y = 1080 }, new Vector2 { X = 1280, Y = 720 }, new Vector2 { X = 800, Y = 600 } };
-    private int currentResolution = 1; // default is 720p
+    private int currentResolution = 0; // default is 720p
     private bool fullScreen = false;
     private GraphicsDeviceManager graphicsDeviceManager;
     private PhysicsManager physicsManager;
@@ -24,6 +24,7 @@ public class DebugConsole
     private PhysicsManager.StaticEntities[] staticEntities;
     private ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags.DefaultOpen;
     private System.Numerics.Vector2 debugConsoleSize;
+    private Core core;
 
     public DebugConsole(GraphicsDeviceManager graphicsDeviceManager)
     {
@@ -31,6 +32,7 @@ public class DebugConsole
         physicsManager = PhysicsManager.GetInstance();
         movingEntities = Enum.GetValues<PhysicsManager.MovingEntities>();
         staticEntities = Enum.GetValues<PhysicsManager.StaticEntities>();
+        core = Core.GetInstance();
     }
 
     public void Initialize(Game game)
@@ -82,18 +84,6 @@ public class DebugConsole
                 }
             }
 
-            if (ImGui.CollapsingHeader("Board colliders "))
-            {
-                // debug information
-                Rectangle topCollider = new Rectangle(0, 0, graphicsDeviceManager.PreferredBackBufferWidth, 1);
-                Rectangle botCollider = new Rectangle(0, screenHeight, screenWidth, 1);
-                Rectangle leftCollider = new Rectangle(0, 0, 1, screenHeight);
-                Rectangle rightCollider = new Rectangle(screenWidth, 0, 0, screenHeight);
-                ImGui.TextWrapped($"Top collider {topCollider}");
-                ImGui.TextWrapped($"Bot collider {botCollider}");
-                ImGui.TextWrapped($"Left collider {leftCollider}");
-                ImGui.TextWrapped($"Right collider {rightCollider}");
-            }
             ImGui.EndChild();
 
             ImGui.SameLine();
@@ -135,10 +125,13 @@ public class DebugConsole
                             if (ImGui.Selectable(resolutionPresets[i], currentResolution == i))
                             {
                                 currentResolution = i; // selection changed, only runs if a res is chosen
-                                graphicsDeviceManager.PreferredBackBufferWidth = (int)resolutions[i].X;
-                                graphicsDeviceManager.PreferredBackBufferHeight = (int)resolutions[i].Y;
-                                Core.GetInstance().UpdateScaleMatrix();
-                                graphicsDeviceManager.ApplyChanges();
+                                int width = (int)resolutions[i].X;
+                                int height = (int)resolutions[i].Y;
+
+                                core.SetScreenResolution(width, height);
+
+                                core.UpdateScaleMatrix();
+
                                 Debug.WriteLine($"Resolution {resolutions[i].X}x{resolutions[i].Y} selected");
                             }
                         }
