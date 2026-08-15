@@ -33,7 +33,7 @@ public class MyGame : Core
         boardSprite = assetsManager.GetSprite(0);
 
         // called once scale the board to fit screen whenever application starts
-        ScaleBoardToFitScreen(GetScreenResolution());
+        ScaleBoardToFitScreen();
 
         base.Initialize();
     }
@@ -90,15 +90,15 @@ public class MyGame : Core
     }
 
     //----------------------------------PRIVATE METHODS----------------------------------------------
-    private void ScaleBoardToFitScreen(Vector2 targetRes)
+    private void ScaleBoardToFitScreen()
     {
-        Vector2 currentRes = GetScreenResolution();
+        Vector2 virtualResolution = GetVirtualResolution();
 
         float spriteWidth = boardSprite.Width;
         float spriteHeight = boardSprite.Height;
 
-        float scaledX = Remap(spriteWidth, 0, boardSprite.TextureRegion.GetRectWidth(), 0, targetRes.X) / spriteWidth;
-        float scaledY = Remap(spriteHeight, 0, boardSprite.TextureRegion.GetRectHeight(), 0, targetRes.Y) / spriteHeight;
+        float scaledX = Remap(spriteWidth, 0, boardSprite.TextureRegion.GetRectWidth(), 0, virtualResolution.X) / spriteWidth;
+        float scaledY = Remap(spriteHeight, 0, boardSprite.TextureRegion.GetRectHeight(), 0, virtualResolution.Y) / spriteHeight;
 
         // set the scale factor for board sprite once!
         boardSprite.Scale = new Vector2(scaledX, scaledY);

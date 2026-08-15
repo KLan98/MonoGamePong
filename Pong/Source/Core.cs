@@ -21,8 +21,8 @@ public class Core : Game
     private ContentManager contentManager;
     private KeyboardState oldState;
     protected DebugConsole debugConsole;
-    protected const float virtualHeight = 1080f; // this is the resolution for mouse coordinates, sprite positions, UI layout, physics,these stay fixed internally
-    protected const float virtualWidth = 1920f;
+    protected const float virtualHeight = 720f; // this is the resolution for mouse coordinates, sprite positions, UI layout, physics,these stay fixed internally
+    protected const float virtualWidth = 1280f;
 
     //-------------------------------------PROPERTIES-----------------------------------------------------
     public SpriteBatch SpriteBatch
@@ -112,7 +112,7 @@ public class Core : Game
     {
         float scaleX = graphicsDeviceManager.PreferredBackBufferWidth / virtualWidth;
         float scaleY = graphicsDeviceManager.PreferredBackBufferHeight / virtualHeight;
-         SpriteScaleMatrix = Matrix.CreateScale(scaleX, scaleY, 0f);
+         SpriteScaleMatrix = Matrix.CreateScale(scaleX, scaleY, 1.0f);
     }
 
     /// <summary>
@@ -157,6 +157,7 @@ public class Core : Game
         graphicsDeviceManager.PreferredBackBufferWidth = width;
         graphicsDeviceManager.PreferredBackBufferHeight = height;
         graphicsDeviceManager.ApplyChanges();
+        UpdateScaleMatrix();
     }
 
     public Vector2 GetVirtualResolution()

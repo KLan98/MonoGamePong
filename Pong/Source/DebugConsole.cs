@@ -16,7 +16,7 @@ public class DebugConsole
     //--------------------------------------FIELDS--------------------------------------
     private string[] resolutionPresets = new string[] { "1920x1080", "1280x720", "800x600" };
     private Vector2[] resolutions = new Vector2[] { new Vector2 { X = 1920, Y = 1080 }, new Vector2 { X = 1280, Y = 720 }, new Vector2 { X = 800, Y = 600 } };
-    private int currentResolution = 0; // default is 720p
+    private int currentResolution = 1; // default is 720p
     private bool fullScreen = false;
     private GraphicsDeviceManager graphicsDeviceManager;
     private PhysicsManager physicsManager;
@@ -129,8 +129,6 @@ public class DebugConsole
                                 int height = (int)resolutions[i].Y;
 
                                 core.SetScreenResolution(width, height);
-
-                                core.UpdateScaleMatrix();
 
                                 Debug.WriteLine($"Resolution {resolutions[i].X}x{resolutions[i].Y} selected");
                             }

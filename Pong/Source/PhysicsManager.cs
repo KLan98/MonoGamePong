@@ -231,23 +231,23 @@ public class PhysicsManager
     public void ResetPosition(int index)
     {
         // get the current screen res
-        Vector2 screenRes = core.GetVirtualResolution();
-        Debug.WriteLine($"{screenRes}");
+        Vector2 screenVRes = core.GetVirtualResolution();
+        Debug.WriteLine($"{screenVRes}");
         MovingStop(index);
 
         // set init pos
         switch (index)
         {
             case (int)MovingEntities.Player:
-                movingPhysics[index].Position = new Vector2 { X = 0, Y = screenRes.Y / 2 - movingSprites[0].Size.Y / 2 };
+                movingPhysics[index].Position = new Vector2 { X = 0, Y = screenVRes.Y / 2 - movingSprites[0].Size.Y / 2 };
                 break;
 
             case (int)MovingEntities.Com:
-                movingPhysics[index].Position = new Vector2 { X = screenRes.X - movingSprites[1].Size.X, Y = screenRes.Y / 2 - movingSprites[1].Size.Y / 2 };
+                movingPhysics[index].Position = new Vector2 { X = screenVRes.X - movingSprites[1].Size.X, Y = screenVRes.Y / 2 - movingSprites[1].Size.Y / 2 };
                 break;
 
             case (int)MovingEntities.Ball:
-                movingPhysics[index].Position = new Vector2 { X = screenRes.X / 2, Y = screenRes.Y / 2 };
+                movingPhysics[index].Position = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
                 break;
         }
     }
