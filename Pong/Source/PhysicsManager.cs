@@ -27,22 +27,22 @@ public class PhysicsManager
         sprites = assetsManager.GetSprites();
 
         core = Core.GetInstance();
-        Vector2 screenRes = core.GetScreenResolution();
+        Vector2 screenVRes = core.GetVirtualResolution();
 
         // init physics objects 
-        Vector2 playerInitPos = new Vector2 { X = 0, Y = screenRes.Y / 2 - movingSprites[0].Size.Y / 2 };
+        Vector2 playerInitPos = new Vector2 { X = 0, Y = screenVRes.Y / 2 - movingSprites[0].Size.Y / 2 };
         EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero);
 
-        Vector2 comIntPos = new Vector2 { X = screenRes.X - movingSprites[1].Size.X, Y = playerInitPos.Y };
+        Vector2 comIntPos = new Vector2 { X = screenVRes.X - movingSprites[1].Size.X, Y = playerInitPos.Y };
         EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero);
 
-        Vector2 ballInitPos = new Vector2 { X = screenRes.X / 2, Y = screenRes.Y / 2 };
+        Vector2 ballInitPos = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
         EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero);
 
         // Init positions of non-moving objects
         Vector2 boardInitPos = Vector2.Zero;
         Vector2 playerScoreBarInitPos = Vector2.Zero;
-        Vector2 comScoreBarInitPos = new Vector2 { X = screenRes.X - sprites[2].Size.X, Y = 0 };
+        Vector2 comScoreBarInitPos = new Vector2 { X = screenVRes.X - sprites[2].Size.X, Y = 0 };
 
         // should be synced with sprites array in asset manager
         staticPositions = new Vector2[3]
@@ -100,14 +100,14 @@ public class PhysicsManager
     public void UpdatePhysics(GameTime gameTime)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        int screenWidth = (int)core.GetScreenResolution().X;
-        int screenHeight = (int)core.GetScreenResolution().Y;
+        int screenVWidth = (int)core.GetVirtualResolution().X;
+        int screenVHeight = (int)core.GetVirtualResolution().Y;
 
         // Updated based on screen resolution
-        Rectangle topCollider = new Rectangle(0, 0, screenWidth, 1);
-        Rectangle botCollider = new Rectangle(0, screenHeight, screenWidth, 1);
-        Rectangle leftCollider = new Rectangle(0, 0, 1, screenHeight);
-        Rectangle rightCollider = new Rectangle(screenWidth, 0, 0, screenHeight);
+        Rectangle topCollider = new Rectangle(0, 0, screenVWidth, 1);
+        Rectangle botCollider = new Rectangle(0, screenVHeight, screenVWidth, 1);
+        Rectangle leftCollider = new Rectangle(0, 0, 1, screenVHeight);
+        Rectangle rightCollider = new Rectangle(screenVWidth, 0, 0, screenVHeight);
 
         Vector2 normal = Vector2.Zero; // normal used for calculating reflection vector
 
@@ -231,23 +231,23 @@ public class PhysicsManager
     public void ResetPosition(int index)
     {
         // get the current screen res
-        Vector2 screenRes = core.GetScreenResolution();
-        Debug.WriteLine($"{screenRes}");
+        Vector2 screenVRes = core.GetVirtualResolution();
+        Debug.WriteLine($"{screenVRes}");
         MovingStop(index);
 
         // set init pos
         switch (index)
         {
             case (int)MovingEntities.Player:
-                movingPhysics[index].Position = new Vector2 { X = 0, Y = screenRes.Y / 2 - movingSprites[0].Size.Y / 2 };
+                movingPhysics[index].Position = new Vector2 { X = 0, Y = screenVRes.Y / 2 - movingSprites[0].Size.Y / 2 };
                 break;
 
             case (int)MovingEntities.Com:
-                movingPhysics[index].Position = new Vector2 { X = screenRes.X - movingSprites[1].Size.X, Y = screenRes.Y / 2 - movingSprites[1].Size.Y / 2 };
+                movingPhysics[index].Position = new Vector2 { X = screenVRes.X - movingSprites[1].Size.X, Y = screenVRes.Y / 2 - movingSprites[1].Size.Y / 2 };
                 break;
 
             case (int)MovingEntities.Ball:
-                movingPhysics[index].Position = new Vector2 { X = screenRes.X / 2, Y = screenRes.Y / 2 };
+                movingPhysics[index].Position = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
                 break;
         }
     }
