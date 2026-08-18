@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
-using System.Runtime.Intrinsics.X86;
 
 public class PhysicsManager
 {
@@ -19,6 +18,9 @@ public class PhysicsManager
     private Sprite[] movingSprites = new Sprite[3];
     private Sprite[] sprites = new Sprite[3];
     private Vector2[] initPos = new Vector2[3];
+    private int screenVWidth, screenVHeight;
+    private Rectangle topCollider, botCollider, leftCollider, rightCollider;
+    private Vector2 normal; // normal used for calculating reflection vector
 
     public PhysicsManager()
     {
@@ -67,8 +69,18 @@ public class PhysicsManager
         instance = this;
 
         //ballPhysics.Direction = new Vector2(-1, 0);
-        //ballPhysics.Direction = new Vector2(-1, 0);
         ballPhysics.Direction = new Vector2(0.1f, 0.3f);
+
+        screenVWidth = (int)core.GetVirtualResolution().X;
+        screenVHeight = (int)core.GetVirtualResolution().Y;
+
+        // Updated based on screen resolution
+        topCollider = new Rectangle(0, 0, screenVWidth, 1);
+        botCollider = new Rectangle(0, screenVHeight, screenVWidth, 1);
+        leftCollider = new Rectangle(0, 0, 1, screenVHeight);
+        rightCollider = new Rectangle(screenVWidth, 0, 0, screenVHeight);
+
+        normal = Vector2.Zero;
     }
 
     public static PhysicsManager GetInstance()
@@ -100,24 +112,13 @@ public class PhysicsManager
     public void UpdatePhysics(GameTime gameTime)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        int screenVWidth = (int)core.GetVirtualResolution().X;
-        int screenVHeight = (int)core.GetVirtualResolution().Y;
 
-        // Updated based on screen resolution
-        Rectangle topCollider = new Rectangle(0, 0, screenVWidth, 1);
-        Rectangle botCollider = new Rectangle(0, screenVHeight, screenVWidth, 1);
-        Rectangle leftCollider = new Rectangle(0, 0, 1, screenVHeight);
-        Rectangle rightCollider = new Rectangle(screenVWidth, 0, 0, screenVHeight);
-
-        Vector2 normal = Vector2.Zero; // normal used for calculating reflection vector
-
-        rectColliders = new Rectangle[movingPhysics.Length];
+        //rectColliders = new Rectangle[movingPhysics.Length];
 
         for (int i = 0; i < movingPhysics.Length; i++)
         {
-            rectColliders[i] = new Rectangle((int)movingPhysics[i].Position.X, (int)movingPhysics[i].Position.Y, (int)movingSprites[i].Size.X, (int)movingSprites[i].Size.Y);
+            //rectColliders[i] = new Rectangle((int)movingPhysics[i].Position.X, (int)movingPhysics[i].Position.Y, (int)movingSprites[i].Size.X, (int)movingSprites[i].Size.Y);
             Vector2 currentPosition = movingPhysics[i].Position; // store the current position
-
             Vector2 direction = movingPhysics[i].Direction;
             float currentSpeed = movingPhysics[i].Speed;
 
@@ -140,58 +141,77 @@ public class PhysicsManager
 
             Vector2 movedDistance = displacement * direction;
             Vector2 velocity = easedSpeed * direction; // speed * direction
+            Vector2 newPosition = currentPosition + movedDistance; 
 
             // if player or com collides with either top or bottom bounds
             if (i < 2)
             {
-                if (rectColliders[i].Intersects(botCollider) || rectColliders[i].Intersects(topCollider))
+                // construct a predicted rect based on the new position, this is the next position the player will move to, but currently in currentPosition
+                Rectangle predictedRect = new Rectangle(
+                    (int)newPosition.X, (int)newPosition.Y,
+                    (int)movingSprites[i].Size.X, (int)movingSprites[i].Size.Y);
+
+                // if entity intersects top collider and is moving upward (negative movedDistance indicates moving upward)
+                if (predictedRect.Intersects(topCollider) && movedDistance.Y < 0)
                 {
-                    // blocking collision response
-                    movingPhysics[i].Position = currentPosition; // assign new position = stored position
-                    MovingStop(i);
+                    newPosition.Y = currentPosition.Y; // block only upward movement
+                }
+
+                // if entity intersects top collider and is moving downward (positive movedDistance indicates moving downward)
+                else if (predictedRect.Intersects(botCollider) && movedDistance.Y > 0)
+                {
+                    newPosition.Y = currentPosition.Y; // block only downward movement
                 }
             }
 
-            movingPhysics[i].Position += movedDistance;
+            movingPhysics[i].Position = newPosition;
             movingPhysics[i].Velocity = velocity;
             movingPhysics[i].Speed = easedSpeed;
-        }
+            //else if (i == 2)
+            //{
+            //    if (rectColliders[i].Intersects(rectColliders[1]))
+            //    {
+            //        normal = Vector2.UnitX;
+            //    }
 
-        // if ball collides with player or com
-        if (rectColliders[2].Intersects(rectColliders[1]))
-        {
-            normal = Vector2.UnitX;
-        }
+            //    else if (rectColliders[i].Intersects(rectColliders[0]))
+            //    {
+            //        normal = -Vector2.UnitX;
+            //    }
 
-        else if (rectColliders[2].Intersects(rectColliders[0]))
-        {
-            normal = -Vector2.UnitX;
-        }
+            //    else if (rectColliders[i].Intersects(topCollider))
+            //    {
+            //        normal = Vector2.UnitY;
+            //    }
 
-        else if (rectColliders[2].Intersects(topCollider))
-        {
-            normal = Vector2.UnitY;
-        }
+            //    else if (rectColliders[i].Intersects(botCollider))
+            //    {
+            //        normal = -Vector2.UnitY;
+            //    }
 
-        else if (rectColliders[2].Intersects(botCollider))
-        {
-            normal = -Vector2.UnitY;
-        }
+            //    else if (rectColliders[i].Intersects(leftCollider))
+            //    {
+            //        Debug.WriteLine("Enemy scored");
+            //        // increment point
+            //    }
 
-        else if (rectColliders[2].Intersects(leftCollider))
-        {
-            Debug.WriteLine("Enemy scored");
-            // increment point
-        }
+            //    else if (rectColliders[i].Intersects(rightCollider))
+            //    {
+            //        Debug.WriteLine("Player scored");
+            //        // increment point
+            //    }
 
-        else if (rectColliders[2].Intersects(rightCollider))
-        {
-            Debug.WriteLine("Player scored");
-            // increment point
-        }
+            //    else
+            //    {
+            //        movingPhysics[i].Position += movedDistance;
+            //        movingPhysics[i].Velocity = velocity;
+            //        movingPhysics[i].Speed = easedSpeed;
+            //    }
 
-        // Update direction of ball
-        movingPhysics[2].Direction = Vector2.Reflect(movingPhysics[2].Direction, normal);
+            //    // if ball collides with top or bottom colliders update direction of ball
+            //    movingPhysics[i].Direction = Vector2.Reflect(movingPhysics[i].Direction, normal);
+            //}
+        }
     }
 
     public void MovingStop(int index)
