@@ -17,7 +17,6 @@ public class PhysicsManager
     private float easeDuration = 2; // time it takes to reach max speed
     private Sprite[] movingSprites = new Sprite[3];
     private Sprite[] sprites = new Sprite[3];
-    private Vector2[] initPos = new Vector2[3];
     private int screenVWidth, screenVHeight;
     private Rectangle topCollider, botCollider, leftCollider, rightCollider;
     private Vector2 normal; // normal used for calculating reflection vector
