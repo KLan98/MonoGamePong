@@ -70,7 +70,6 @@ public class DebugConsole
                     ImGui.TextWrapped($"Velocity {physicsManager.GetEntityPhysics(i).Velocity}");
                     ImGui.TextWrapped($"Current position {physicsManager.GetEntityPhysics(i).Position}");
                     ImGui.TextWrapped($"Current direction {physicsManager.GetEntityPhysics(i).Direction}");
-                    ImGui.TextWrapped($"Collider information {physicsManager.GetColliderInfo(i)}");
                 }
             }
 

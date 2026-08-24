@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
+using System.Reflection;
 
 public class PhysicsManager
 {
@@ -77,7 +78,7 @@ public class PhysicsManager
         topCollider = new Rectangle(0, 0, screenVWidth, 1);
         botCollider = new Rectangle(0, screenVHeight, screenVWidth, 1);
         leftCollider = new Rectangle(0, 0, 1, screenVHeight);
-        rightCollider = new Rectangle(screenVWidth, 0, 0, screenVHeight);
+        rightCollider = new Rectangle(screenVWidth, 0, 1, screenVHeight);
 
         normal = Vector2.Zero;
     }
@@ -153,12 +154,16 @@ public class PhysicsManager
                 if (predictedRect.Intersects(topCollider) && movedDistance.Y < 0)
                 {
                     newPosition.Y = currentPosition.Y; // block only upward movement
+                    //easingTimeElapsed[i] = 0;
+                    MovingStop(i);
                 }
 
                 // if entity intersects top collider and is moving downward (positive movedDistance indicates moving downward)
                 else if (predictedRect.Intersects(botCollider) && movedDistance.Y > 0)
-                {
+                 {
                     newPosition.Y = currentPosition.Y; // block only downward movement
+                    //easingTimeElapsed[i] = 0;
+                    MovingStop(i);
                 }
             }
 
@@ -195,13 +200,13 @@ public class PhysicsManager
                 else if (predictedRect.Intersects(playerCollider))
                 {
                     normal = Vector2.UnitX;
-                    direction = Vector2.Reflect(direction + movingPhysics[0].Direction / 5f, normal);
+                    direction = Vector2.Reflect(direction, normal);
                 }
 
                 else if (predictedRect.Intersects(comCollider))
                 {
                     normal = -Vector2.UnitX;
-                    direction = Vector2.Reflect(direction + movingPhysics[1].Direction / 5f, normal);
+                    direction = Vector2.Reflect(direction, normal);
                 }
             }
 
@@ -234,16 +239,6 @@ public class PhysicsManager
     {
         // only handle the assigning of data, no rendering included 
         staticPositions[index] = newPos;
-    }
-
-    public Rectangle GetColliderInfo(int index)
-    {
-        if (rectColliders == null)
-        {
-            return new Rectangle(0, 0, 0, 0);
-        }
-
-        return rectColliders[index];
     }
 
     // set an entity to its init position
