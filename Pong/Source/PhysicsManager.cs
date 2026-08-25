@@ -13,7 +13,6 @@ public class PhysicsManager
     private Vector2[] staticPositions;
     private static PhysicsManager instance;
     private Core core;
-    private Rectangle[] rectColliders;
     private float[] easingTimeElapsed = new float[3]; // easing time elapsed for every moving entities 
     private float easeDuration = 2; // time it takes to reach max speed
     private Sprite[] movingSprites = new Sprite[3];
@@ -33,13 +32,13 @@ public class PhysicsManager
 
         // init physics objects 
         Vector2 playerInitPos = new Vector2 { X = 0, Y = screenVRes.Y / 2 - movingSprites[0].Size.Y / 2 };
-        EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero);
+        EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero, 1.25f);
 
         Vector2 comIntPos = new Vector2 { X = screenVRes.X - movingSprites[1].Size.X, Y = playerInitPos.Y };
-        EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero);
+        EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero, 1.25f);
 
         Vector2 ballInitPos = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
-        EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero);
+        EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero, 1.0f);
 
         // Init positions of non-moving objects
         Vector2 boardInitPos = Vector2.Zero;
@@ -68,8 +67,7 @@ public class PhysicsManager
         }
         instance = this;
 
-        ballPhysics.Direction = new Vector2(-1, 0);
-        //ballPhysics.Direction = new Vector2(0.1f, 0.3f);
+        movingPhysics[(int)MovingEntities.Ball].Direction = new Vector2(-1, 0); // reference the array index directly after its initialization
 
         screenVWidth = (int)core.GetVirtualResolution().X;
         screenVHeight = (int)core.GetVirtualResolution().Y;
@@ -108,16 +106,24 @@ public class PhysicsManager
         return movingPhysics[index].Position;
     }
 
+    public void AddForce(int index, Vector2 force)
+    {
+        movingPhysics[index].Force += force;
+    }
+
+    public void AddImpulse(int index, Vector2 impulse)
+    {
+        movingPhysics[index].Impulse += impulse;
+    }
+
     // called in game-logic-update
     public void UpdatePhysics(GameTime gameTime)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        //rectColliders = new Rectangle[movingPhysics.Length];
 
         for (int i = 0; i < movingPhysics.Length; i++)
         {
-            //rectColliders[i] = new Rectangle((int)movingPhysics[i].Position.X, (int)movingPhysics[i].Position.Y, (int)movingSprites[i].Size.X, (int)movingSprites[i].Size.Y);
             Vector2 currentPosition = movingPhysics[i].Position; // store the current position
             Vector2 direction = movingPhysics[i].Direction;
             float currentSpeed = movingPhysics[i].Speed;
@@ -154,7 +160,6 @@ public class PhysicsManager
                 if (predictedRect.Intersects(topCollider) && movedDistance.Y < 0)
                 {
                     newPosition.Y = currentPosition.Y; // block only upward movement
-                    //easingTimeElapsed[i] = 0;
                     MovingStop(i);
                 }
 
@@ -162,7 +167,6 @@ public class PhysicsManager
                 else if (predictedRect.Intersects(botCollider) && movedDistance.Y > 0)
                  {
                     newPosition.Y = currentPosition.Y; // block only downward movement
-                    //easingTimeElapsed[i] = 0;
                     MovingStop(i);
                 }
             }
@@ -201,13 +205,38 @@ public class PhysicsManager
                 {
                     normal = Vector2.UnitX;
                     direction = Vector2.Reflect(direction, normal);
+
+                    // compute velocity and add the impulse based on that added impulse
+                    Vector2 paddleVelocity = movingPhysics[(int)MovingEntities.Player].Velocity;
+                    float mass = movingPhysics[(int)MovingEntities.Player].Mass;
+                    float ballMass = movingPhysics[i].Mass;
+                    float massRatio = mass / ballMass;
+                    AddImpulse((int)MovingEntities.Ball, massRatio * paddleVelocity);
                 }
 
                 else if (predictedRect.Intersects(comCollider))
                 {
                     normal = -Vector2.UnitX;
                     direction = Vector2.Reflect(direction, normal);
+
                 }
+            }
+
+            // recompute velocity from the (possibly reflected) direction, then fold in any pending impulse
+            velocity = easedSpeed * direction;
+
+            Vector2 impulse = movingPhysics[i].Impulse;
+
+            // If AddImpulse called, and impulse is added then 
+            if (impulse != Vector2.Zero)
+            {
+                velocity += impulse / movingPhysics[i].Mass;
+                easedSpeed = velocity.Length();
+                if (easedSpeed > 0f)
+                {
+                    direction = velocity / easedSpeed;
+                }
+                movingPhysics[i].Impulse = Vector2.Zero; // one-shot, consume immediately
             }
 
             // update all physics information lastly in order to predictedRect to have its affect
@@ -262,6 +291,7 @@ public class PhysicsManager
 
             case (int)MovingEntities.Ball:
                 movingPhysics[index].Position = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
+                movingPhysics[index].Direction = new Vector2(-1, 0);
                 break;
         }
     }

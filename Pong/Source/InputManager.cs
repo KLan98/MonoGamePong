@@ -20,7 +20,7 @@ public class InputManager
     public void UpdateInput()
     {
         KeyboardState newState = Keyboard.GetState();
-        
+
         // toggle debug console
         if (newState.IsKeyDown(Keys.D))
         {
@@ -28,7 +28,6 @@ public class InputManager
             if (oldState.IsKeyDown(Keys.LeftControl) && !oldState.IsKeyDown(Keys.D))
             {
                 ToolActive = !ToolActive;
-                Debug.WriteLine("Debug console toggled");
             }
         }
 
@@ -46,15 +45,13 @@ public class InputManager
             {
                 physicsManager.SetDirection(0, up);
             }
-
-            Debug.WriteLine($"Velocity  {physicsManager.GetEntityPhysics(0).Velocity}");
         }
+
         else if (newState.IsKeyUp(Keys.Up))
         {
             if (oldState.IsKeyDown(Keys.Up))
             {
                 physicsManager.MovingStop(0);
-                Debug.WriteLine($"Velocity  {physicsManager.GetEntityPhysics(0).Velocity}");
             }
         }
 
@@ -65,15 +62,12 @@ public class InputManager
             {
                 physicsManager.SetDirection(0, down);
             }
-
-            Debug.WriteLine($"Velocity   {physicsManager.GetEntityPhysics(0).Velocity}");
         }
         else if (newState.IsKeyUp(Keys.Down))
         {
             if (oldState.IsKeyDown(Keys.Down))
             {
                 physicsManager.MovingStop(0);
-                Debug.WriteLine($"Velocity   {physicsManager.GetEntityPhysics(0).Velocity}");
             }
         }
 
