@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
-using System.Runtime.Intrinsics.X86;
+using System.Reflection;
 
 public class PhysicsManager
 {
@@ -13,12 +13,13 @@ public class PhysicsManager
     private Vector2[] staticPositions;
     private static PhysicsManager instance;
     private Core core;
-    private Rectangle[] rectColliders;
     private float[] easingTimeElapsed = new float[3]; // easing time elapsed for every moving entities 
     private float easeDuration = 2; // time it takes to reach max speed
     private Sprite[] movingSprites = new Sprite[3];
     private Sprite[] sprites = new Sprite[3];
-    private Vector2[] initPos = new Vector2[3];
+    private int screenVWidth, screenVHeight;
+    private Rectangle topCollider, botCollider, leftCollider, rightCollider;
+    private Vector2 normal; // normal used for calculating reflection vector
 
     public PhysicsManager()
     {
@@ -31,13 +32,13 @@ public class PhysicsManager
 
         // init physics objects 
         Vector2 playerInitPos = new Vector2 { X = 0, Y = screenVRes.Y / 2 - movingSprites[0].Size.Y / 2 };
-        EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero);
+        EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero, 1.25f);
 
         Vector2 comIntPos = new Vector2 { X = screenVRes.X - movingSprites[1].Size.X, Y = playerInitPos.Y };
-        EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero);
+        EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero, 1.25f);
 
         Vector2 ballInitPos = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
-        EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero);
+        EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero, 1.0f);
 
         // Init positions of non-moving objects
         Vector2 boardInitPos = Vector2.Zero;
@@ -66,9 +67,18 @@ public class PhysicsManager
         }
         instance = this;
 
-        //ballPhysics.Direction = new Vector2(-1, 0);
-        //ballPhysics.Direction = new Vector2(-1, 0);
-        ballPhysics.Direction = new Vector2(0.1f, 0.3f);
+        movingPhysics[(int)MovingEntities.Ball].Direction = new Vector2(-1, 0); // reference the array index directly after its initialization
+
+        screenVWidth = (int)core.GetVirtualResolution().X;
+        screenVHeight = (int)core.GetVirtualResolution().Y;
+
+        // Updated based on screen resolution
+        topCollider = new Rectangle(0, 0, screenVWidth, 1);
+        botCollider = new Rectangle(0, screenVHeight, screenVWidth, 1);
+        leftCollider = new Rectangle(0, 0, 1, screenVHeight);
+        rightCollider = new Rectangle(screenVWidth, 0, 1, screenVHeight);
+
+        normal = Vector2.Zero;
     }
 
     public static PhysicsManager GetInstance()
@@ -96,28 +106,25 @@ public class PhysicsManager
         return movingPhysics[index].Position;
     }
 
+    public void AddForce(int index, Vector2 force)
+    {
+        movingPhysics[index].Force += force;
+    }
+
+    public void AddImpulse(int index, Vector2 impulse)
+    {
+        movingPhysics[index].Impulse += impulse;
+    }
+
     // called in game-logic-update
     public void UpdatePhysics(GameTime gameTime)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        int screenVWidth = (int)core.GetVirtualResolution().X;
-        int screenVHeight = (int)core.GetVirtualResolution().Y;
 
-        // Updated based on screen resolution
-        Rectangle topCollider = new Rectangle(0, 0, screenVWidth, 1);
-        Rectangle botCollider = new Rectangle(0, screenVHeight, screenVWidth, 1);
-        Rectangle leftCollider = new Rectangle(0, 0, 1, screenVHeight);
-        Rectangle rightCollider = new Rectangle(screenVWidth, 0, 0, screenVHeight);
-
-        Vector2 normal = Vector2.Zero; // normal used for calculating reflection vector
-
-        rectColliders = new Rectangle[movingPhysics.Length];
 
         for (int i = 0; i < movingPhysics.Length; i++)
         {
-            rectColliders[i] = new Rectangle((int)movingPhysics[i].Position.X, (int)movingPhysics[i].Position.Y, (int)movingSprites[i].Size.X, (int)movingSprites[i].Size.Y);
             Vector2 currentPosition = movingPhysics[i].Position; // store the current position
-
             Vector2 direction = movingPhysics[i].Direction;
             float currentSpeed = movingPhysics[i].Speed;
 
@@ -140,58 +147,104 @@ public class PhysicsManager
 
             Vector2 movedDistance = displacement * direction;
             Vector2 velocity = easedSpeed * direction; // speed * direction
+            Vector2 newPosition = currentPosition + movedDistance;
+
+            // construct a predicted rect based on the new position, this is the next position the entity will move to, but currently in currentPosition
+            Rectangle predictedRect = new Rectangle((int)newPosition.X, (int)newPosition.Y, (int)movingSprites[i].Size.X, (int)movingSprites[i].Size.Y);
 
             // if player or com collides with either top or bottom bounds
             if (i < 2)
             {
-                if (rectColliders[i].Intersects(botCollider) || rectColliders[i].Intersects(topCollider))
+                // with the predictedRect
+                // if entity intersects top collider and is moving upward (negative movedDistance indicates moving upward)
+                if (predictedRect.Intersects(topCollider) && movedDistance.Y < 0)
                 {
-                    // blocking collision response
-                    movingPhysics[i].Position = currentPosition; // assign new position = stored position
+                    newPosition.Y = currentPosition.Y; // block only upward movement
+                    MovingStop(i);
+                }
+
+                // if entity intersects top collider and is moving downward (positive movedDistance indicates moving downward)
+                else if (predictedRect.Intersects(botCollider) && movedDistance.Y > 0)
+                 {
+                    newPosition.Y = currentPosition.Y; // block only downward movement
                     MovingStop(i);
                 }
             }
 
-            movingPhysics[i].Position += movedDistance;
+            else if (i == 2)
+            {
+                Rectangle playerCollider = new Rectangle((int)movingPhysics[0].Position.X, (int)movingPhysics[0].Position.Y, (int)movingSprites[0].Size.X, (int)movingSprites[0].Size.Y);
+
+                Rectangle comCollider = new Rectangle((int)movingPhysics[1].Position.X, (int)movingPhysics[1].Position.Y, (int)movingSprites[1].Size.X, (int)movingSprites[1].Size.Y);
+
+                if (predictedRect.Intersects(topCollider))
+                {
+                    normal = Vector2.UnitY;
+                    direction = Vector2.Reflect(direction, normal);
+                }
+
+                else if (predictedRect.Intersects(botCollider))
+                {
+                    normal = -Vector2.UnitY;
+                    direction = Vector2.Reflect(direction, normal);
+                }
+
+                else if (predictedRect.Intersects(leftCollider))
+                {
+                    Debug.WriteLine("Enemy scored");
+                    // increment point
+                }
+
+                else if (predictedRect.Intersects(rightCollider))
+                {
+                    Debug.WriteLine("Player scored");
+                    // increment point
+                }
+
+                else if (predictedRect.Intersects(playerCollider))
+                {
+                    normal = Vector2.UnitX;
+                    direction = Vector2.Reflect(direction, normal);
+
+                    // compute velocity and add the impulse based on that added impulse
+                    Vector2 paddleVelocity = movingPhysics[(int)MovingEntities.Player].Velocity;
+                    float mass = movingPhysics[(int)MovingEntities.Player].Mass;
+                    float ballMass = movingPhysics[i].Mass;
+                    float massRatio = mass / ballMass;
+                    AddImpulse((int)MovingEntities.Ball, massRatio * paddleVelocity);
+                }
+
+                else if (predictedRect.Intersects(comCollider))
+                {
+                    normal = -Vector2.UnitX;
+                    direction = Vector2.Reflect(direction, normal);
+
+                }
+            }
+
+            // recompute velocity from the (possibly reflected) direction, then fold in any pending impulse
+            velocity = easedSpeed * direction;
+
+            Vector2 impulse = movingPhysics[i].Impulse;
+
+            // If AddImpulse called, and impulse is added then 
+            if (impulse != Vector2.Zero)
+            {
+                velocity += impulse / movingPhysics[i].Mass;
+                easedSpeed = velocity.Length();
+                if (easedSpeed > 0f)
+                {
+                    direction = velocity / easedSpeed;
+                }
+                movingPhysics[i].Impulse = Vector2.Zero; // one-shot, consume immediately
+            }
+
+            // update all physics information lastly in order to predictedRect to have its affect
+            movingPhysics[i].Position = newPosition;
             movingPhysics[i].Velocity = velocity;
             movingPhysics[i].Speed = easedSpeed;
+            movingPhysics[i].Direction = direction;
         }
-
-        // if ball collides with player or com
-        if (rectColliders[2].Intersects(rectColliders[1]))
-        {
-            normal = Vector2.UnitX;
-        }
-
-        else if (rectColliders[2].Intersects(rectColliders[0]))
-        {
-            normal = -Vector2.UnitX;
-        }
-
-        else if (rectColliders[2].Intersects(topCollider))
-        {
-            normal = Vector2.UnitY;
-        }
-
-        else if (rectColliders[2].Intersects(botCollider))
-        {
-            normal = -Vector2.UnitY;
-        }
-
-        else if (rectColliders[2].Intersects(leftCollider))
-        {
-            Debug.WriteLine("Enemy scored");
-            // increment point
-        }
-
-        else if (rectColliders[2].Intersects(rightCollider))
-        {
-            Debug.WriteLine("Player scored");
-            // increment point
-        }
-
-        // Update direction of ball
-        movingPhysics[2].Direction = Vector2.Reflect(movingPhysics[2].Direction, normal);
     }
 
     public void MovingStop(int index)
@@ -217,16 +270,6 @@ public class PhysicsManager
         staticPositions[index] = newPos;
     }
 
-    public Rectangle GetColliderInfo(int index)
-    {
-        if (rectColliders == null)
-        {
-            return new Rectangle(0, 0, 0, 0);
-        }
-
-        return rectColliders[index];
-    }
-
     // set an entity to its init position
     public void ResetPosition(int index)
     {
@@ -248,6 +291,7 @@ public class PhysicsManager
 
             case (int)MovingEntities.Ball:
                 movingPhysics[index].Position = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
+                movingPhysics[index].Direction = new Vector2(-1, 0);
                 break;
         }
     }
