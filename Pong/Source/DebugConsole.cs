@@ -7,6 +7,8 @@ using MonoGame.ImGuiNet;
 using System.Diagnostics;
 using LanMonoGameLibrary;
 using System;
+using Pong;
+using Microsoft.VisualBasic;
 
 public class DebugConsole
 {
@@ -25,6 +27,7 @@ public class DebugConsole
     private ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags.DefaultOpen;
     private System.Numerics.Vector2 debugConsoleSize;
     private Core core;
+    private int balls; // default number of balls
 
     public DebugConsole(GraphicsDeviceManager graphicsDeviceManager)
     {
@@ -33,6 +36,7 @@ public class DebugConsole
         movingEntities = Enum.GetValues<PhysicsManager.MovingEntities>();
         staticEntities = Enum.GetValues<PhysicsManager.StaticEntities>();
         core = Core.GetInstance();
+        balls = GameConstants.DEFAULT_NUMBER_OF_BALLS;
     }
 
     public void Initialize(Game game)
@@ -102,7 +106,13 @@ public class DebugConsole
                 physicsManager.ResetPosition((int)PhysicsManager.MovingEntities.Ball);
             }
 
-            if (ImGui.Button("Reset ball position", buttonSize))
+            if (ImGui.Button("Pause game", buttonSize))
+            {
+
+            }
+
+            ImGui.SetNextItemWidth(buttonSize.X);
+            if (ImGui.SliderInt("Number of balls", ref balls, GameConstants.BALL_NUMBER_SLIDER_MIN, GameConstants.BALL_NUMBER_SLIDER_MAX))
             {
 
             }
