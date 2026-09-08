@@ -7,16 +7,20 @@ using System.Diagnostics;
 
 namespace Pong;
 
-public class MyGame : Core
+public class MyGame : Core, IObserver
 {
-    //--------------------------------FIELDS-------------------------------------------
+    //--------------------------------FIELDS----------------------------------------
     private AssetsManager assetsManager;
     private InputManager inputManager;
     //private Texture2D spriteSheet;
     private Sprite[] sprites;
     private Sprite[] movingSprites;
+    private Sprite[] ballSprites;
     private Sprite boardSprite;
     private PhysicsManager physicsManager;
+
+    //---------------------------------PROPERTIES-----------------------------------
+    public int[] NumberOfBalls { get; private set; }
 
     public MyGame() : base("Pong", (int)virtualWidth, (int)virtualHeight, false)
     {
@@ -25,7 +29,7 @@ public class MyGame : Core
     // stuffs that are exclusive for pong should be initialize here
     protected override void Initialize()
     {
-        assetsManager = new AssetsManager(GetContentManager());
+        assetsManager = new AssetsManager(GetContentManager()); // pass this into assetManager's constructor for using observer pattern
         physicsManager = new PhysicsManager();
         inputManager = new InputManager(); // for now this input manager is exclusive
 
@@ -36,6 +40,8 @@ public class MyGame : Core
         ScaleBoardToFitScreen();
 
         base.Initialize();
+
+        AddObservers();
     }
 
     protected override void LoadContent()
@@ -45,6 +51,8 @@ public class MyGame : Core
         sprites = assetsManager.GetSprites();
 
         movingSprites = assetsManager.GetMovingSprites();
+
+        ballSprites = assetsManager.GetBallSprites();
     }
 
     // Game loop logic
@@ -72,7 +80,12 @@ public class MyGame : Core
         {
             movingSprites[i].Draw(SpriteBatch, physicsManager.GetPosition(i));
         }
-        
+
+        for (int i = 0; i < ballSprites.Length; i++)
+        {
+            ballSprites[i].Draw(SpriteBatch, physicsManager.GetBallPosition(i));
+        }
+
         // draw sprites of non-moving objects
         for (int i = 0; i < sprites.Length; i++)
         {
@@ -80,7 +93,7 @@ public class MyGame : Core
         }
 
         SpriteBatch.End();
-        
+
         // Draw debug UI
         debugConsole.ImGuiRenderer.BeginLayout(gameTime);
         debugConsole.UpdateDraw(inputManager.ToolActive);
@@ -102,5 +115,24 @@ public class MyGame : Core
 
         // set the scale factor for board sprite once!
         boardSprite.Scale = new Vector2(scaledX, scaledY);
+    }
+
+    public void OnNotify(object eventData)
+    {
+        int numberOfBalls = (int)eventData;
+        Debug.WriteLine("event 3 fired");
+
+        // Only call this after ballsOnScreen array has been updated
+        ballSprites = assetsManager.GetBallSprites();
+    }
+
+    /// <summary>
+    /// Add observers for all subjects once all components have been constructed
+    /// </summary>
+    private void AddObservers()
+    {
+        debugConsole.AddObserver(EventType.DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, assetsManager);
+        assetsManager.AddObserver(EventType.ASSET_MAMAGER_BALL_ASSETS_UPDATED, physicsManager);
+        physicsManager.AddObserver(EventType.PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
     }
 }

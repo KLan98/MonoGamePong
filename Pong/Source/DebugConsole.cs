@@ -9,11 +9,13 @@ using LanMonoGameLibrary;
 using System;
 using Pong;
 using Microsoft.VisualBasic;
+using System.Collections.Generic;
 
-public class DebugConsole
+public class DebugConsole : ISubject
 {
     //-----------------------------------PROPERTIES------------------------------------
     public ImGuiRenderer ImGuiRenderer { get; private set; }
+    public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
     //--------------------------------------FIELDS--------------------------------------
     private string[] resolutionPresets = new string[] { "1920x1080", "1280x720", "800x600" };
@@ -28,6 +30,7 @@ public class DebugConsole
     private System.Numerics.Vector2 debugConsoleSize;
     private Core core;
     private int balls; // default number of balls
+    private AssetsManager assetsManager;
 
     public DebugConsole(GraphicsDeviceManager graphicsDeviceManager)
     {
@@ -37,8 +40,12 @@ public class DebugConsole
         staticEntities = Enum.GetValues<PhysicsManager.StaticEntities>();
         core = Core.GetInstance();
         balls = GameConstants.DEFAULT_NUMBER_OF_BALLS;
+        assetsManager = AssetsManager.GetInstance();
+
+        ObserversDict = new Dictionary<EventType, List<IObserver>>();
     }
 
+    // Initialization method from on ImGui recommendation
     public void Initialize(Game game)
     {
         ImGuiRenderer = new ImGuiRenderer(game);
@@ -103,7 +110,7 @@ public class DebugConsole
             // Buttons
             if (ImGui.Button("Reset ball position", buttonSize))
             {
-                physicsManager.ResetPosition((int)PhysicsManager.MovingEntities.Ball);
+                //physicsManager.ResetPosition((int)PhysicsManager.MovingEntities.Ball);
             }
 
             if (ImGui.Button("Pause game", buttonSize))
@@ -112,9 +119,13 @@ public class DebugConsole
             }
 
             ImGui.SetNextItemWidth(buttonSize.X);
-            if (ImGui.SliderInt("Number of balls", ref balls, GameConstants.BALL_NUMBER_SLIDER_MIN, GameConstants.BALL_NUMBER_SLIDER_MAX))
+            ImGui.SliderInt("Number of balls", ref balls, GameConstants.BALL_NUMBER_SLIDER_MIN, GameConstants.BALL_NUMBER_SLIDER_MAX);
+            if (ImGui.IsItemDeactivatedAfterEdit())
             {
-
+                // this will cause a trigger in every component that makes up the ball such as physics, assets,...
+                // perfect use case for broadcast/ listener event trigger since this approach scales better whenever there are more components
+                // in addition, the Draw update needs to know about the number of balls to be drawn, another listener to be added
+                Notify(EventType.DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, balls);
             }
 
             // Menu bar
@@ -175,5 +186,39 @@ public class DebugConsole
         }
 
         float remainingWidth = ImGui.GetContentRegionAvail().X;
+    }
+
+    public void Notify(EventType eventType, object eventData)
+    {
+        if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+        {
+            foreach (IObserver observer in observers)
+            {
+                observer.OnNotify(eventData);
+            }
+        }
+    }
+
+    public void AddObserver(EventType eventType, IObserver observer)
+    {
+        // if the key already exists then add the observer to its associated list
+        if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+        {
+            observers.Add(observer);
+        }
+
+        // if not then create a new key - value entry in the dictionary
+        else
+        {
+            ObserversDict.Add(eventType, new List<IObserver> { observer }); 
+        }
+    }
+
+    public void RemoveObserver(EventType eventType, IObserver observer)
+    {
+        if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+        {
+            observers.Remove(observer);
+        }
     }
 }

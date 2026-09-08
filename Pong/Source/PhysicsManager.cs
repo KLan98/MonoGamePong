@@ -2,43 +2,52 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Pong;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 
-public class PhysicsManager
+public class PhysicsManager : IObserver, ISubject
 {
-    private float maxSpeed = 300f;
     private EntityPhysics[] movingPhysics;
     private Vector2[] staticPositions;
     private static PhysicsManager instance;
     private Core core;
-    private float[] easingTimeElapsed = new float[3]; // easing time elapsed for every moving entities 
-    private float easeDuration = 2; // time it takes to reach max speed
-    private Sprite[] movingSprites = new Sprite[3];
+    private float[] easingTimeElapsed = new float[2]; // easing time elapsed for every moving entities 
+    private float[] ballEasingTimeElapsed;
+    private Sprite[] movingSprites = new Sprite[2];
     private Sprite[] sprites = new Sprite[3];
+    private Sprite[] ballSprites;
     private int screenVWidth, screenVHeight;
     private Rectangle topCollider, botCollider, leftCollider, rightCollider;
     private Vector2 normal; // normal used for calculating reflection vector
+    private EntityPhysics[] ballsOnScreen;
+    private Vector2 screenVRes;
+    private AssetsManager assetsManager;
+    private Random random = new Random();
+
+    public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
     public PhysicsManager()
     {
-        AssetsManager assetsManager = AssetsManager.GetInstance();
+        assetsManager = AssetsManager.GetInstance();
         movingSprites = assetsManager.GetMovingSprites();
         sprites = assetsManager.GetSprites();
+        ballSprites = assetsManager.GetBallSprites();
 
         core = Core.GetInstance();
-        Vector2 screenVRes = core.GetVirtualResolution();
+        screenVRes = core.GetVirtualResolution();
 
         // init physics objects 
         Vector2 playerInitPos = new Vector2 { X = 0, Y = screenVRes.Y / 2 - movingSprites[0].Size.Y / 2 };
-        EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero, 1.25f);
+        EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero, GameConstants.PLAYER_MASS);
 
         Vector2 comIntPos = new Vector2 { X = screenVRes.X - movingSprites[1].Size.X, Y = playerInitPos.Y };
-        EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero, 1.25f);
+        EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero, GameConstants.COM_MASS);
 
         Vector2 ballInitPos = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
-        EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero, 1.0f);
+        EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero, GameConstants.BALL_MASS);
 
         // Init positions of non-moving objects
         Vector2 boardInitPos = Vector2.Zero;
@@ -54,11 +63,10 @@ public class PhysicsManager
         };
 
         // should be synced with movingSprites array in asset manager
-        movingPhysics = new EntityPhysics[3]
+        movingPhysics = new EntityPhysics[2]
         {
             playerPhysics,
             comPhysics,
-            ballPhysics,
         };
 
         if (instance != null)
@@ -67,7 +75,13 @@ public class PhysicsManager
         }
         instance = this;
 
-        movingPhysics[(int)MovingEntities.Ball].Direction = new Vector2(-1, 0); // reference the array index directly after its initialization
+        // the game always start with 1 ball 
+        ballsOnScreen = new EntityPhysics[1]
+        {
+            ballPhysics
+        };
+        ballsOnScreen[0].Direction = new Vector2(-1, 0); // reference the array index directly after its initialization
+        ballEasingTimeElapsed = new float[1];
 
         screenVWidth = (int)core.GetVirtualResolution().X;
         screenVHeight = (int)core.GetVirtualResolution().Y;
@@ -79,6 +93,8 @@ public class PhysicsManager
         rightCollider = new Rectangle(screenVWidth, 0, 1, screenVHeight);
 
         normal = Vector2.Zero;
+
+        ObserversDict = new Dictionary<EventType, List<IObserver>>();
     }
 
     public static PhysicsManager GetInstance()
@@ -106,14 +122,21 @@ public class PhysicsManager
         return movingPhysics[index].Position;
     }
 
-    public void AddForce(int index, Vector2 force)
+    public Vector2 GetBallPosition(int index)
     {
-        movingPhysics[index].Force += force;
+        return ballsOnScreen[index].Position;
     }
 
+    // Add force to ball
+    public void AddForce(int index, Vector2 force)
+    {
+        ballsOnScreen[index].Force += force;
+    }
+
+    // Add impulse to ball
     public void AddImpulse(int index, Vector2 impulse)
     {
-        movingPhysics[index].Impulse += impulse;
+        ballsOnScreen[index].Impulse += impulse;
     }
 
     // called in game-logic-update
@@ -121,7 +144,7 @@ public class PhysicsManager
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-
+        // Handling player and com physics
         for (int i = 0; i < movingPhysics.Length; i++)
         {
             Vector2 currentPosition = movingPhysics[i].Position; // store the current position
@@ -135,13 +158,13 @@ public class PhysicsManager
             }
 
             // easing time so far / total ease duration, clamp it so that it won't exceed 1.0f
-            float normalizedElapsed = MathF.Min(1.0f, easingTimeElapsed[i] / easeDuration);
+            float normalizedElapsed = MathF.Min(1.0f, easingTimeElapsed[i] / GameConstants.EASING_DURATION);
 
             // Easing function use normalized time as input 
             float easedTime = core.EaseInQuad(normalizedElapsed);
 
             // lerp between current speed and max speed, eased time as input, clamped between current speed and max speed
-            float easedSpeed = MathHelper.Lerp(currentSpeed, maxSpeed, easedTime);
+            float easedSpeed = MathHelper.Lerp(currentSpeed, GameConstants.MAX_SPEED, easedTime);
 
             float displacement = easedSpeed * deltaTime;
 
@@ -153,90 +176,18 @@ public class PhysicsManager
             Rectangle predictedRect = new Rectangle((int)newPosition.X, (int)newPosition.Y, (int)movingSprites[i].Size.X, (int)movingSprites[i].Size.Y);
 
             // if player or com collides with either top or bottom bounds
-            if (i < 2)
+            // if entity intersects top collider and is moving upward (negative movedDistance indicates moving upward)
+            if (predictedRect.Intersects(topCollider) && movedDistance.Y < 0)
             {
-                // with the predictedRect
-                // if entity intersects top collider and is moving upward (negative movedDistance indicates moving upward)
-                if (predictedRect.Intersects(topCollider) && movedDistance.Y < 0)
-                {
-                    newPosition.Y = currentPosition.Y; // block only upward movement
-                    MovingStop(i);
-                }
-
-                // if entity intersects top collider and is moving downward (positive movedDistance indicates moving downward)
-                else if (predictedRect.Intersects(botCollider) && movedDistance.Y > 0)
-                 {
-                    newPosition.Y = currentPosition.Y; // block only downward movement
-                    MovingStop(i);
-                }
+                newPosition.Y = currentPosition.Y; // block only upward movement
+                MovingStop(i);
             }
 
-            else if (i == 2)
+            // if entity intersects top collider and is moving downward (positive movedDistance indicates moving downward)
+            else if (predictedRect.Intersects(botCollider) && movedDistance.Y > 0)
             {
-                Rectangle playerCollider = new Rectangle((int)movingPhysics[0].Position.X, (int)movingPhysics[0].Position.Y, (int)movingSprites[0].Size.X, (int)movingSprites[0].Size.Y);
-
-                Rectangle comCollider = new Rectangle((int)movingPhysics[1].Position.X, (int)movingPhysics[1].Position.Y, (int)movingSprites[1].Size.X, (int)movingSprites[1].Size.Y);
-
-                if (predictedRect.Intersects(topCollider))
-                {
-                    normal = Vector2.UnitY;
-                    direction = Vector2.Reflect(direction, normal);
-                }
-
-                else if (predictedRect.Intersects(botCollider))
-                {
-                    normal = -Vector2.UnitY;
-                    direction = Vector2.Reflect(direction, normal);
-                }
-
-                else if (predictedRect.Intersects(leftCollider))
-                {
-                    Debug.WriteLine("Enemy scored");
-                    // increment point
-                }
-
-                else if (predictedRect.Intersects(rightCollider))
-                {
-                    Debug.WriteLine("Player scored");
-                    // increment point
-                }
-
-                else if (predictedRect.Intersects(playerCollider))
-                {
-                    normal = Vector2.UnitX;
-                    direction = Vector2.Reflect(direction, normal);
-
-                    // compute velocity and add the impulse based on that added impulse
-                    Vector2 paddleVelocity = movingPhysics[(int)MovingEntities.Player].Velocity;
-                    float mass = movingPhysics[(int)MovingEntities.Player].Mass;
-                    float ballMass = movingPhysics[i].Mass;
-                    float massRatio = mass / ballMass;
-                    AddImpulse((int)MovingEntities.Ball, massRatio * paddleVelocity);
-                }
-
-                else if (predictedRect.Intersects(comCollider))
-                {
-                    normal = -Vector2.UnitX;
-                    direction = Vector2.Reflect(direction, normal);
-
-                }
-            }
-
-            // recompute velocity from the (possibly reflected) direction, then fold in any pending impulse
-            velocity = easedSpeed * direction;
-
-            Vector2 impulse = movingPhysics[i].Impulse;
-
-            // If AddImpulse called, and impulse is added then 
-            if (impulse != Vector2.Zero)
-            {
-                velocity += impulse / movingPhysics[i].Mass;
-                easedSpeed = velocity.Length();
-                if (easedSpeed > 0f)
-                {
-                    direction = velocity / easedSpeed;
-                }
-                movingPhysics[i].Impulse = Vector2.Zero; // one-shot, consume immediately
+                newPosition.Y = currentPosition.Y; // block only downward movement
+                MovingStop(i);
             }
 
             // update all physics information lastly in order to predictedRect to have its affect
@@ -244,6 +195,117 @@ public class PhysicsManager
             movingPhysics[i].Velocity = velocity;
             movingPhysics[i].Speed = easedSpeed;
             movingPhysics[i].Direction = direction;
+        }
+
+        // Handling ball physics
+        for (int i = 0; i < ballsOnScreen.Length; i++)
+        {
+            Vector2 currentPosition = ballsOnScreen[i].Position; // store the current position
+            Vector2 direction = ballsOnScreen[i].Direction;
+            float currentSpeed = ballsOnScreen[i].Speed;
+
+            // increase easing time only when moving
+            if (ballsOnScreen[i].Direction != Vector2.Zero)
+            {
+                ballEasingTimeElapsed[i] += deltaTime;
+            }
+
+            // easing time so far / total ease duration, clamp it so that it won't exceed 1.0f
+            float normalizedElapsed = MathF.Min(1.0f, ballEasingTimeElapsed[i] / GameConstants.EASING_DURATION);
+
+            // Easing function use normalized time as input 
+            float easedTime = core.EaseInQuad(normalizedElapsed);
+
+            // lerp between current speed and max speed, eased time as input, clamped between current speed and max speed
+            float easedSpeed = MathHelper.Lerp(currentSpeed, GameConstants.MAX_SPEED, easedTime);
+
+            float displacement = easedSpeed * deltaTime;
+
+            Vector2 movedDistance = displacement * direction;
+            Vector2 velocity = easedSpeed * direction; // speed * direction
+            Vector2 newPosition = currentPosition + movedDistance;
+
+            Rectangle predictedRect = new Rectangle((int)newPosition.X, (int)newPosition.Y, (int)ballSprites[i].Size.X, (int)ballSprites[i].Size.Y);
+
+            Rectangle playerCollider = new Rectangle((int)movingPhysics[0].Position.X, (int)movingPhysics[0].Position.Y, (int)movingSprites[0].Size.X, (int)movingSprites[0].Size.Y);
+
+            Rectangle comCollider = new Rectangle((int)movingPhysics[1].Position.X, (int)movingPhysics[1].Position.Y, (int)movingSprites[1].Size.X, (int)movingSprites[1].Size.Y);
+
+            if (predictedRect.Intersects(topCollider))
+            {
+                normal = Vector2.UnitY;
+                direction = Vector2.Reflect(direction, normal);
+            }
+
+            else if (predictedRect.Intersects(botCollider))
+            {
+                normal = -Vector2.UnitY;
+                direction = Vector2.Reflect(direction, normal);
+            }
+
+            else if (predictedRect.Intersects(leftCollider))
+            {
+                Debug.WriteLine("Enemy scored");
+                // increment point
+            }
+
+            else if (predictedRect.Intersects(rightCollider))
+            {
+                Debug.WriteLine("Player scored");
+                // increment point
+            }
+
+            else if (predictedRect.Intersects(playerCollider))
+            {
+                normal = Vector2.UnitX;
+                direction = Vector2.Reflect(direction, normal);
+
+                // compute velocity and add the impulse based on that added impulse
+                Vector2 paddleVelocity = movingPhysics[(int)MovingEntities.Player].Velocity;
+                float massRatio = GameConstants.PLAYER_MASS / GameConstants.BALL_MASS;
+                AddImpulse(i, massRatio * paddleVelocity);
+            }
+
+            else if (predictedRect.Intersects(comCollider))
+            {
+                normal = -Vector2.UnitX;
+                direction = Vector2.Reflect(direction, normal);
+
+                // compute velocity and add the impulse based on that added impulse
+                Vector2 paddleVelocity = movingPhysics[(int)MovingEntities.Com].Velocity;
+                float massRatio = GameConstants.PLAYER_MASS / GameConstants.BALL_MASS;
+                AddImpulse(i, massRatio * paddleVelocity);
+            }
+
+            // re-compute velocity from the (possibly reflected) direction, then fold in any pending impulse
+            velocity = easedSpeed * direction;
+
+            Vector2 impulse = ballsOnScreen[i].Impulse;
+
+            // If AddImpulse called, and impulse is added then
+            if (impulse != Vector2.Zero)
+            {
+                // impulse (J) is a change in momentum: J = m * Δv, so Δv = J / m
+                // dividing the stored impulse by the ball's mass converts it into a velocity change,
+                // then adding it "kicks" the current velocity instantly (e.g. paddle hit)
+                velocity += impulse / GameConstants.BALL_MASS;
+
+                // velocity is a combined speed+direction vector; its length is the new scalar speed
+                easedSpeed = velocity.Length();
+
+                // re-derive a unit direction from the kicked velocity (velocity / its own length = unit vector)
+                // guarded so we don't divide by zero if the kick somehow cancels velocity out completely
+                if (easedSpeed > 0f)
+                {
+                    direction = velocity / easedSpeed;
+                }
+                ballsOnScreen[i].Impulse = Vector2.Zero; // one-shot, consume immediately so it isn't re-applied next frame
+            }
+
+            ballsOnScreen[i].Position = newPosition;
+            ballsOnScreen[i].Velocity = velocity;
+            ballsOnScreen[i].Speed = easedSpeed;
+            ballsOnScreen[i].Direction = direction;
         }
     }
 
@@ -289,18 +351,79 @@ public class PhysicsManager
                 movingPhysics[index].Position = new Vector2 { X = screenVRes.X - movingSprites[1].Size.X, Y = screenVRes.Y / 2 - movingSprites[1].Size.Y / 2 };
                 break;
 
-            case (int)MovingEntities.Ball:
-                movingPhysics[index].Position = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
-                movingPhysics[index].Direction = new Vector2(-1, 0);
-                break;
+                //case (int)MovingEntities.Ball:
+                //    movingPhysics[index].Position = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
+                //    movingPhysics[index].Direction = new Vector2(-1, 0);
+                //    break;
+        }
+    }
+
+    public void OnNotify(object eventData)
+    {
+        Debug.WriteLine("event 2 fired");
+        int numberOfBalls = (int)eventData;
+        // update ball-related information, from assets manager
+        ballSprites = assetsManager.GetBallSprites();
+        ballEasingTimeElapsed = new float[numberOfBalls];
+
+        // Re-init EntityPhysics array
+        ballsOnScreen = new EntityPhysics[numberOfBalls];
+
+        for (int i = 0; i < numberOfBalls; i++)
+        {
+            Vector2 ballSize = ballSprites[i].Size;
+            Vector2 ballInitPos = new Vector2
+            {
+                X = (float)(random.NextDouble() * (screenVRes.X - ballSize.X)),
+                Y = (float)(random.NextDouble() * (screenVRes.Y - ballSize.Y))
+            };
+            float angle = (float)(random.NextDouble() * MathHelper.TwoPi);
+            Vector2 ballDirection = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
+            EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, ballDirection, GameConstants.BALL_MASS);
+            ballsOnScreen[i] = ballPhysics;
+        }
+
+        Notify(EventType.PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, numberOfBalls);
+    }
+
+    public void Notify(EventType eventType, object eventData)
+    {
+        if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+        {
+            foreach (IObserver observer in observers)
+            {
+                observer.OnNotify(eventData);
+            }
+        }
+    }
+
+    public void AddObserver(EventType eventType, IObserver observer)
+    {
+        // if the key already exists then add the observer to its associated list
+        if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+        {
+            observers.Add(observer);
+        }
+
+        // if not then create a new key - value entry in the dictionary
+        else
+        {
+            ObserversDict.Add(eventType, new List<IObserver> { observer });
+        }
+    }
+
+    public void RemoveObserver(EventType eventType, IObserver observer)
+    {
+        if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+        {
+            observers.Remove(observer);
         }
     }
 
     public enum MovingEntities
     {
         Player,
-        Com,
-        Ball
+        Com
     }
 
     public enum StaticEntities
