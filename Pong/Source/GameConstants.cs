@@ -5,7 +5,7 @@ namespace Pong
     {
         public const int DEFAULT_NUMBER_OF_BALLS = 1;
         public const int BALL_NUMBER_SLIDER_MIN = 1;
-        public const int BALL_NUMBER_SLIDER_MAX = 500;
+        public const int BALL_NUMBER_SLIDER_MAX = 50000;
         public const float BALL_MASS = 1f;
         public const float COM_MASS = 1.25f;
         public const float PLAYER_MASS = 1.25f;

@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
+using Pong;
 
 namespace LanMonoGameLibrary;
 
@@ -38,7 +39,7 @@ public class Core : Game
     //------------------------------CONSTRUCTOR-------------------------
     public Core(string title, int width, int height, bool fullScreen)
     {
-        if (instance != null && instance == this)
+        if (instance != null)
         {
             throw new InvalidOperationException($"Only a single Core instance can be created");
         }

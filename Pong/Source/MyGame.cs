@@ -29,8 +29,8 @@ public class MyGame : Core, IObserver
     // stuffs that are exclusive for pong should be initialize here
     protected override void Initialize()
     {
-        assetsManager = new AssetsManager(GetContentManager()); // pass this into assetManager's constructor for using observer pattern
-        physicsManager = new PhysicsManager();
+        assetsManager = AssetsManager.Create(GetContentManager()); // pass this into assetManager's constructor for using observer pattern
+        physicsManager = PhysicsManager.Create();
         inputManager = new InputManager(); // for now this input manager is exclusive
 
         // scale the board sprite to fit screen

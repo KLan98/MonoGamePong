@@ -1,6 +1,9 @@
 ﻿using System;
 
-public interface IObserver
+namespace LanMonoGameLibrary
 {
-    void OnNotify(object eventData);
+    public interface IObserver
+    {
+        void OnNotify(object eventData);
+    }
 }

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
 using LanMonoGameLibrary;
+using Pong;
 
 public class InputManager
 {
