@@ -203,8 +203,11 @@ namespace Pong
                 movingPhysics[i].Velocity = velocity;
                 movingPhysics[i].Speed = easedSpeed;
 
-                // normalized direction
-                ballsOnScreen[i].Direction = new Vector2(direction.X / direction.Length(), direction.Y / direction.Length());
+                // normalized direction (skip when zero to avoid a 0/0 NaN)
+                if (direction != Vector2.Zero)
+                {
+                    movingPhysics[i].Direction = Vector2.Normalize(direction);
+                }
             }
 
             // Handling ball physics
@@ -316,8 +319,11 @@ namespace Pong
                 ballsOnScreen[i].Velocity = velocity;
                 ballsOnScreen[i].Speed = easedSpeed;
 
-                // normalized direction
-                ballsOnScreen[i].Direction = new Vector2(direction.X / direction.Length(), direction.Y / direction.Length());
+                // normalized direction (skip when zero to avoid a 0/0 NaN)
+                if (direction != Vector2.Zero)
+                {
+                    ballsOnScreen[i].Direction = Vector2.Normalize(direction);
+                }
             }
         }
 
