@@ -11,7 +11,6 @@ public struct Circle : IEquatable<Circle>
         get;
     }
 
-
     // Y position of center
     public float Y
     {

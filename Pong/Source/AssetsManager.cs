@@ -2,128 +2,205 @@
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Pong;
+using LanMonoGameLibrary;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-public class AssetsManager
+namespace Pong
 {
-    private static AssetsManager instance;
-    private ContentManager content;
-    private TextureRegion[] textureRegions;
-    private Sprite[] sprites;
-    private Sprite[] movingSprites;
-    private Texture2D spriteSheet;
-    private Vector2[] sizeVector;
-
-    public AssetsManager(ContentManager content)
+    public class AssetsManager : IObserver, ISubject
     {
-        this.content = content;
+        private static AssetsManager instance;
+        private ContentManager content;
+        private TextureRegion[] textureRegions;
+        private Sprite[] sprites;
+        private Sprite[] movingSprites;
+        private Sprite[] ballSprites;
+        private Texture2D spriteSheet;
+        private Vector2[] sizeVector;
+        private TextureRegion ballTextureRegion;
 
-        spriteSheet = content.Load<Texture2D>("PongAssets/spritesheet");
-        InitAssets();
-        
-        if (instance != null && instance == this)
+        public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
+
+        private AssetsManager(ContentManager content)
         {
-            return;
+            this.content = content;
+
+            spriteSheet = content.Load<Texture2D>("PongAssets/spritesheet");
+            InitAssets();
+
+            ObserversDict = new Dictionary<EventType, List<IObserver>>();
         }
 
-        instance = this;
-    }
+        public static AssetsManager Create(ContentManager content)
+        {
+            if (instance != null)
+            {
+                // Throw exeption during compilation
+                throw new InvalidOperationException("AssetsManager instance already created.");
+            }
 
-    //-------------------------PUBLIC METHODS-------------------------
-    public Texture2D GetSpriteSheet()
-    {
-        return spriteSheet;
-    }
+            instance = new AssetsManager(content);
+            return instance;
+        }
 
-    public Sprite[] GetSprites()
-    {
-        return sprites;
-    }
+        //-------------------------PUBLIC METHODS-------------------------
+        public Texture2D GetSpriteSheet()
+        {
+            return spriteSheet;
+        }
 
-    public Sprite[] GetMovingSprites()
-    {
-        return movingSprites;
-    }
+        public Sprite[] GetSprites()
+        {
+            return sprites;
+        }
 
-    public static AssetsManager GetInstance()
-    {
-        return instance;
-    }
+        public Sprite[] GetMovingSprites()
+        {
+            return movingSprites;
+        }
 
-    public Sprite GetSprite(int index)
-    {
-        // can be improved by implementing binary sort
-        return sprites[(int)index];
-    }
+        public static AssetsManager GetInstance()
+        {
+            return instance;
+        }
 
-    public Sprite GetMovingSprite(int index)
-    {
-        return movingSprites[index];
-    }
+        public Sprite GetSprite(int index)
+        {
+            // can be improved by implementing binary sort
+            return sprites[(int)index];
+        }
 
-    public Vector2[] GetSizeVector()
-    {
-        return sizeVector;
-    }
+        public Sprite GetMovingSprite(int index)
+        {
+            return movingSprites[index];
+        }
 
-    //--------------------------------------PRIVATE METHODS---------------------------------
-    private void InitAssets()
-    {
-        // Create texture regions from the sprite sheet
-        TextureRegion ball = new TextureRegion(spriteSheet, 0, 0, 30, 30);
-        TextureRegion ballMotion = new TextureRegion(spriteSheet, ball.GetRectWidth(), 0, 46, 46);
-        TextureRegion board = new TextureRegion(spriteSheet, ballMotion.GetRectWidth() + ball.GetRectWidth(), 0, 802, 455);
-        TextureRegion computer = new TextureRegion(spriteSheet, board.GetRectX() + board.GetRectWidth(), 0, 17, 120);
-        TextureRegion player = new TextureRegion(spriteSheet, computer.GetRectX() + computer.GetRectWidth(), 0, 17, 120);
-        TextureRegion scoreBar = new TextureRegion(spriteSheet, player.GetRectX() + player.GetRectWidth(), 0, 341, 47);
+        public Sprite[] GetBallSprites()
+        {
+            return ballSprites;
+        }
 
-        textureRegions = new TextureRegion[6] {
-            ball,
-            ballMotion,
-            board,
-            computer,
-            player,
-            scoreBar,
+        public Vector2[] GetSizeVector()
+        {
+            return sizeVector;
+        }
+
+        //--------------------------------------PRIVATE METHODS---------------------------------
+        private void InitAssets()
+        {
+            // Create texture regions from the sprite sheet
+            ballTextureRegion = new TextureRegion(spriteSheet, 0, 0, 30, 30);
+            TextureRegion ballMotionTextureRegion = new TextureRegion(spriteSheet, ballTextureRegion.GetRectWidth(), 0, 46, 46);
+            TextureRegion boardTextureRegion = new TextureRegion(spriteSheet, ballMotionTextureRegion.GetRectWidth() + ballTextureRegion.GetRectWidth(), 0, 802, 455);
+            TextureRegion computerTextureRegion = new TextureRegion(spriteSheet, boardTextureRegion.GetRectX() + boardTextureRegion.GetRectWidth(), 0, 17, 120);
+            TextureRegion playerTextureRegion = new TextureRegion(spriteSheet, computerTextureRegion.GetRectX() + computerTextureRegion.GetRectWidth(), 0, 17, 120);
+            TextureRegion scoreBarTextureRegion = new TextureRegion(spriteSheet, playerTextureRegion.GetRectX() + playerTextureRegion.GetRectWidth(), 0, 341, 47);
+
+            textureRegions = new TextureRegion[6] {
+            ballTextureRegion,
+            ballMotionTextureRegion,
+            boardTextureRegion,
+            computerTextureRegion,
+            playerTextureRegion,
+            scoreBarTextureRegion,
         };
 
-        // Create sprites from texture regions
-        Sprite ballSprite = new Sprite(ball);
-        ballSprite.LayerDepth = 1.0f;
-        //ballSprite.CenterOrigin(); needed for circle collider, currently using rect collider
+            // Create sprites from texture regions
+            Sprite ballSprite = new Sprite(ballTextureRegion);
+            ballSprite.LayerDepth = 1.0f;
+            //ballSprite.CenterOrigin(); needed for circle collider, currently using rect collider
 
-        Sprite ballMotionSprite = new Sprite(ballMotion);
-        ballMotionSprite.LayerDepth = 1.0f;
+            Sprite ballMotionSprite = new Sprite(ballMotionTextureRegion);
+            ballMotionSprite.LayerDepth = 1.0f;
 
-        Sprite boardSprite = new Sprite(board);
-        boardSprite.LayerDepth = 0.0f;
+            Sprite boardSprite = new Sprite(boardTextureRegion);
+            boardSprite.LayerDepth = 0.0f;
 
-        Sprite computerSprite = new Sprite(computer);
-        computerSprite.LayerDepth = 1.0f;
-        
-        Sprite playerSprite = new Sprite(player);
-        playerSprite.LayerDepth = 1.0f;
+            Sprite computerSprite = new Sprite(computerTextureRegion);
+            computerSprite.LayerDepth = 1.0f;
 
-        Sprite playerScoreBarSprite = new Sprite(scoreBar);
-        playerScoreBarSprite.LayerDepth = 0.1f;
+            Sprite playerSprite = new Sprite(playerTextureRegion);
+            playerSprite.LayerDepth = 1.0f;
 
-        Sprite comScoreBarSprite = new Sprite(scoreBar);
-        comScoreBarSprite.LayerDepth = 0.1f;
-        comScoreBarSprite.SpriteEffects = SpriteEffects.FlipHorizontally;
+            Sprite playerScoreBarSprite = new Sprite(scoreBarTextureRegion);
+            playerScoreBarSprite.LayerDepth = 0.1f;
 
-        sprites = new Sprite[3]
-        {
+            Sprite comScoreBarSprite = new Sprite(scoreBarTextureRegion);
+            comScoreBarSprite.LayerDepth = 0.1f;
+            comScoreBarSprite.SpriteEffects = SpriteEffects.FlipHorizontally;
+
+            sprites = new Sprite[3]
+            {
             boardSprite,
             playerScoreBarSprite,
             comScoreBarSprite
-        };
+            };
 
-        movingSprites = new Sprite[3]
-        {
+            movingSprites = new Sprite[2]
+            {
             playerSprite,
             computerSprite,
+            };
+
+            ballSprites = new Sprite[1]
+            {
             ballSprite
-        };
+            };
+        }
+
+        public void OnNotify(object eventData)
+        {
+            int numberOfBalls = (int)eventData;
+            Debug.WriteLine("event 1 fired");
+
+            // Re-init ballSprites array
+            ballSprites = new Sprite[numberOfBalls];
+
+            for (int i = 0; i < numberOfBalls; i++)
+            {
+                Sprite ballSprite = new Sprite(ballTextureRegion);
+                ballSprite.LayerDepth = 1.0f;
+                ballSprites[i] = ballSprite;
+            }
+
+            Notify(EventType.ASSET_MAMAGER_BALL_ASSETS_UPDATED, numberOfBalls);
+        }
+
+        public void Notify(EventType eventType, object eventData)
+        {
+            if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+            {
+                foreach (IObserver observer in observers)
+                {
+                    observer.OnNotify(eventData);
+                }
+            }
+        }
+
+        public void AddObserver(EventType eventType, IObserver observer)
+        {
+            // if the key already exists then add the observer to its associated list
+            if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+            {
+                observers.Add(observer);
+            }
+
+            // if not then create a new key - value entry in the dictionary
+            else
+            {
+                ObserversDict.Add(eventType, new List<IObserver> { observer });
+            }
+        }
+
+        public void RemoveObserver(EventType eventType, IObserver observer)
+        {
+            if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+            {
+                observers.Remove(observer);
+            }
+        }
     }
 }
