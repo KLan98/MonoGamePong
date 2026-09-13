@@ -258,14 +258,18 @@ namespace Pong
 
                 else if (predictedRect.Intersects(leftCollider))
                 {
-                    Debug.WriteLine("Enemy scored");
-                    // increment point
+                    // increment point for com
+                    Notify(EventType.PHYSICS_MAMAGER_SCORED, 1);
+                    ResetBallPosition();
+                    newPosition = ballsOnScreen[0].Position;
                 }
 
                 else if (predictedRect.Intersects(rightCollider))
                 {
-                    Debug.WriteLine("Player scored");
-                    // increment point
+                    // increment point for player
+                    Notify(EventType.PHYSICS_MAMAGER_SCORED, 0);
+                    ResetBallPosition();
+                    newPosition = ballsOnScreen[0].Position;
                 }
 
                 else if (predictedRect.Intersects(playerCollider))
