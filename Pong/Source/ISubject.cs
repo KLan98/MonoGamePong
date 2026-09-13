@@ -18,7 +18,6 @@ namespace Pong
         DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN,
         ASSET_MAMAGER_BALL_ASSETS_UPDATED,
         PHYSICS_MANAGER_BALL_PHYSICS_UPDATED,
-        PlayerScored,
-        ComScored,
+        PHYSICS_MAMAGER_SCORED,
     }
 }
