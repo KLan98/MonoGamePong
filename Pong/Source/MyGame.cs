@@ -18,6 +18,7 @@ public class MyGame : Core, IObserver
     private Sprite[] ballSprites;
     private Sprite boardSprite;
     private PhysicsManager physicsManager;
+    private ScoringManager scoringManager;
 
     //---------------------------------PROPERTIES-----------------------------------
     public int[] NumberOfBalls { get; private set; }
@@ -32,6 +33,7 @@ public class MyGame : Core, IObserver
         assetsManager = AssetsManager.Create(GetContentManager()); // pass this into assetManager's constructor for using observer pattern
         physicsManager = PhysicsManager.Create();
         inputManager = new InputManager(); // for now this input manager is exclusive
+        scoringManager = new ScoringManager(); 
 
         // scale the board sprite to fit screen
         boardSprite = assetsManager.GetSprite(0);
@@ -134,5 +136,6 @@ public class MyGame : Core, IObserver
         debugConsole.AddObserver(EventType.DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, assetsManager);
         assetsManager.AddObserver(EventType.ASSET_MAMAGER_BALL_ASSETS_UPDATED, physicsManager);
         physicsManager.AddObserver(EventType.PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
+        physicsManager.AddObserver(EventType.PHYSICS_MAMAGER_SCORED, scoringManager);
     }
 }
