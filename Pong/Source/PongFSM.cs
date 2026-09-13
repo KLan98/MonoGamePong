@@ -1,0 +1,132 @@
+﻿using System;
+using System.Diagnostics;
+using LanMonoGameLibrary;
+using Microsoft.Xna.Framework;
+using static Pong.GameConstants;
+
+namespace Pong
+{
+    public class PongFSM : IObserver
+    {
+        private Machine[] serveState;
+        private Machine[] playingState;
+        private Machine[] scoredState;
+        private PhysicsManager physicsManager;
+        private float stateTime = 0f;
+        private float stateEndCountdown = 0f;
+        private bool scoreFlagRaised = false;
+
+        public PongFSM()
+        {
+            serveState = new Machine[1]
+            {
+                new Machine(stateTime, FSM_SERVE_BEGIN_COUNTDOWN, stateEndCountdown)
+            };
+
+            playingState = new Machine[0]
+            {
+                //new Machine(stateTime, FSM_PLAYING_BEGIN_COUNTDOWN, stateEndCountdown)
+            };
+
+            scoredState = new Machine[0]
+            {
+                //new Machine(stateTime, FSM_SCORED_BEGIN_COUNTDOWN, stateEndCountdown)
+            };
+
+            physicsManager = PhysicsManager.GetInstance();
+        }
+
+        public void OnNotify(object eventData)
+        {
+            scoreFlagRaised = true;
+        }
+
+        // Called in logic update
+        public void UpdateMachines(GameTime gameTime)
+        {
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            //-------------------------SERVE STATE---------------------------------
+            for (int i = serveState.Length - 1; i >= 0; i--)
+            {
+                serveState[i].StateTime += deltaTime;
+
+                if (serveState[i].StateTime >= FSM_SERVE_BEGIN_COUNTDOWN)
+                {
+                    // allow the ball to move in random direction
+                    physicsManager.SetBallDirection();
+
+                    // reset statetime
+                    serveState[i].StateTime = 0f;
+
+                    // clear the serveState vector
+                    serveState = new Machine[0];
+                    playingState = new Machine[1]
+                    {
+                        new Machine(stateTime, FSM_PLAYING_BEGIN_COUNTDOWN, stateEndCountdown)
+                    };
+
+                    Debug.Write("Ball served");
+                }
+
+                else
+                {
+                    // display countdown
+
+                    // ball stays stationary
+                }
+            }
+
+            //------------------------PLAYER STATE--------------------------------
+            for (int i = playingState.Length - 1; i >= 0; i--)
+            {
+                playingState[i].StateTime += deltaTime;
+
+                if (scoreFlagRaised)
+                {
+                    playingState[i].StateTime = 0f;
+                    playingState = new Machine[0];
+                    scoredState = new Machine[1]
+                    {
+                        new Machine(stateTime, FSM_SCORED_BEGIN_COUNTDOWN, stateEndCountdown)
+                    };
+
+                    scoreFlagRaised = false;
+                }
+            }
+
+            //--------------------------SCORED STATE-------------------------------
+            for (int i = scoredState.Length - 1; i >= 0; i--)
+            {
+                scoredState[i].StateTime += deltaTime;
+
+                if (scoredState[i].StateTime <= FSM_SCORED_BEGIN_COUNTDOWN)
+                {
+                    // small delay for this state
+                }
+
+                else if (scoredState[i].StateTime > FSM_SCORED_BEGIN_COUNTDOWN && scoredState[i].StateTime <= FSM_SCORED_INTERMEDIATE_TIME)
+                {
+                    // display text stating someone has scored
+                }
+
+                else if (scoredState[i].StateTime > FSM_SCORED_INTERMEDIATE_TIME)
+                {
+                    // reset ball position
+                    physicsManager.ResetBallPosition();
+
+                    // reset statetime
+                    scoredState[i].StateTime = 0f;
+
+                    scoredState = new Machine[0];
+
+                    serveState = new Machine[1]
+                    {
+                        new Machine(stateTime, FSM_SERVE_BEGIN_COUNTDOWN, stateEndCountdown)
+                    };
+                    Debug.WriteLine("Return to serve");
+                }
+            }
+        }
+    }
+}
