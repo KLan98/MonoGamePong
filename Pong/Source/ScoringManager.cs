@@ -20,7 +20,7 @@ namespace Pong
         public void OnNotify(object eventData)
         {
             int scoreBoardID = (int)eventData;
-            Debug.WriteLine($"Increment score on scoreboard {scoreBoardID}");
+            //Debug.WriteLine($"Increment score on scoreboard {scoreBoardID}");
             scoreBoards[scoreBoardID]++;    
         }
     }

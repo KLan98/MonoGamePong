@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
+using static Pong.EventType;
 
 namespace Pong;
 
@@ -19,6 +20,7 @@ public class MyGame : Core, IObserver
     private Sprite boardSprite;
     private PhysicsManager physicsManager;
     private ScoringManager scoringManager;
+    private PongFSM pongFSM;
 
     //---------------------------------PROPERTIES-----------------------------------
     public int[] NumberOfBalls { get; private set; }
@@ -33,7 +35,8 @@ public class MyGame : Core, IObserver
         assetsManager = AssetsManager.Create(GetContentManager()); // pass this into assetManager's constructor for using observer pattern
         physicsManager = PhysicsManager.Create();
         inputManager = new InputManager(); // for now this input manager is exclusive
-        scoringManager = new ScoringManager(); 
+        scoringManager = new ScoringManager();
+        pongFSM = new PongFSM();
 
         // scale the board sprite to fit screen
         boardSprite = assetsManager.GetSprite(0);
@@ -63,6 +66,7 @@ public class MyGame : Core, IObserver
         inputManager.UpdateInput();
         physicsManager.UpdatePhysics(gameTime);
         //Debug.WriteLine(physicsManager.TestElapsedGameTime(gameTime));
+        pongFSM.UpdateMachines(gameTime);
         base.Update(gameTime);
     }
 
@@ -133,9 +137,10 @@ public class MyGame : Core, IObserver
     /// </summary>
     private void AddObservers()
     {
-        debugConsole.AddObserver(EventType.DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, assetsManager);
-        assetsManager.AddObserver(EventType.ASSET_MAMAGER_BALL_ASSETS_UPDATED, physicsManager);
-        physicsManager.AddObserver(EventType.PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
-        physicsManager.AddObserver(EventType.PHYSICS_MAMAGER_SCORED, scoringManager);
+        debugConsole.AddObserver(DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, assetsManager);
+        assetsManager.AddObserver(ASSET_MAMAGER_BALL_ASSETS_UPDATED, physicsManager);
+        physicsManager.AddObserver(PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
+        //physicsManager.AddObserver(PHYSICS_MAMAGER_SCORED, scoringManager);
+        physicsManager.AddObserver(PHYSICS_MAMAGER_SCORED, pongFSM);
     }
 }
