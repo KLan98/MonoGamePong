@@ -64,6 +64,27 @@
 #begin PongAssets/File.xml
 /copy:PongAssets/File.xml;PongAssets/TextureAtlas.xml
 
+#begin PongAssets/MGS1_Fonts/MGS1 Ammo.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:PongAssets/MGS1_Fonts/MGS1 Ammo.spritefont
+
+#begin PongAssets/MGS1_Fonts/MGS1 Codec.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:PongAssets/MGS1_Fonts/MGS1 Codec.spritefont
+
+#begin PongAssets/MGS1_Fonts/MGS1 HUD.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:PongAssets/MGS1_Fonts/MGS1 HUD.spritefont
+
 #begin PongAssets/Player.png
 /importer:TextureImporter
 /processor:TextureProcessor

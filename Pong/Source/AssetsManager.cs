@@ -21,6 +21,7 @@ namespace Pong
         private Texture2D spriteSheet;
         private Vector2[] sizeVector;
         private TextureRegion ballTextureRegion;
+        private SpriteFont[] fonts;
 
         public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
@@ -30,6 +31,16 @@ namespace Pong
 
             spriteSheet = content.Load<Texture2D>("PongAssets/spritesheet");
             InitAssets();
+
+            SpriteFont hudFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 HUD");
+            SpriteFont ammoFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 Ammo");
+            SpriteFont codecFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 Codec");
+            fonts = new SpriteFont[3]
+            {
+                hudFont,
+                ammoFont, 
+                codecFont,
+            };
 
             ObserversDict = new Dictionary<EventType, List<IObserver>>();
         }
@@ -106,7 +117,7 @@ namespace Pong
             computerTextureRegion,
             playerTextureRegion,
             scoreBarTextureRegion,
-        };
+            };
 
             // Create sprites from texture regions
             Sprite ballSprite = new Sprite(ballTextureRegion);
@@ -149,6 +160,8 @@ namespace Pong
             {
             ballSprite
             };
+
+
         }
 
         public void OnNotify(object eventData)
