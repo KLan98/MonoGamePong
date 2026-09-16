@@ -21,9 +21,7 @@ public class MyGame : Core, IObserver
     private PhysicsManager physicsManager;
     private ScoringManager scoringManager;
     private PongFSM pongFSM;
-
-    //---------------------------------PROPERTIES-----------------------------------
-    public int[] NumberOfBalls { get; private set; }
+    private TextRenderManager textRenderManager;
 
     public MyGame() : base("Pong", (int)virtualWidth, (int)virtualHeight, false)
     {
@@ -37,6 +35,7 @@ public class MyGame : Core, IObserver
         inputManager = new InputManager(); // for now this input manager is exclusive
         scoringManager = new ScoringManager();
         pongFSM = new PongFSM();
+        textRenderManager = new TextRenderManager();
 
         // scale the board sprite to fit screen
         boardSprite = assetsManager.GetSprite(0);
@@ -97,6 +96,9 @@ public class MyGame : Core, IObserver
         {
             sprites[i].Draw(SpriteBatch, physicsManager.GetStaticPosition(i));
         }
+
+        // Draw text
+        textRenderManager.UpdateDraw(SpriteBatch);
 
         SpriteBatch.End();
 

@@ -35,10 +35,11 @@ namespace Pong
             SpriteFont hudFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 HUD");
             SpriteFont ammoFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 Ammo");
             SpriteFont codecFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 Codec");
+
             fonts = new SpriteFont[3]
             {
                 hudFont,
-                ammoFont, 
+                ammoFont,
                 codecFont,
             };
 
@@ -97,6 +98,16 @@ namespace Pong
         public Vector2[] GetSizeVector()
         {
             return sizeVector;
+        }
+
+        public SpriteFont[] GetFonts()
+        {
+            if (fonts.Length > 0)
+            {
+                return fonts;
+            }
+
+            throw new InvalidOperationException("fonts array is currently empty");
         }
 
         //--------------------------------------PRIVATE METHODS---------------------------------
@@ -160,10 +171,9 @@ namespace Pong
             {
             ballSprite
             };
-
-
         }
 
+        //--------------------------------------OBSERVER PATTERN--------------------------------
         public void OnNotify(object eventData)
         {
             int numberOfBalls = (int)eventData;

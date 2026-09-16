@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using LanMonoGameLibrary;
 using Microsoft.Xna.Framework;
@@ -6,7 +7,7 @@ using static Pong.GameConstants;
 
 namespace Pong
 {
-    public class PongFSM : IObserver
+    public class PongFSM : IObserver, ISubject
     {
         private Machine[] serveState;
         private Machine[] playingState;
@@ -14,6 +15,8 @@ namespace Pong
         private PhysicsManager physicsManager;
         private float stateEndCountdown = 0f;
         private bool scoreFlagRaised = false;
+
+        public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
         public PongFSM()
         {
@@ -35,6 +38,17 @@ namespace Pong
             physicsManager = PhysicsManager.GetInstance();
         }
 
+
+        public void AddObserver(EventType eventType, IObserver observer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Notify(EventType eventType, object eventData)
+        {
+            throw new NotImplementedException();
+        }
+
         public void OnNotify(object eventData)
         {
             playingState = new Machine[0];
@@ -42,6 +56,11 @@ namespace Pong
             {
                 new Machine(0f, FSM_SCORED_BEGIN_COUNTDOWN, stateEndCountdown)
             };
+        }
+
+        public void RemoveObserver(EventType eventType, IObserver observer)
+        {
+            throw new NotImplementedException();
         }
 
         // Called in logic update
