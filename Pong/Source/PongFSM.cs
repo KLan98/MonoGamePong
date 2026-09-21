@@ -14,7 +14,7 @@ namespace Pong
         private Machine[] scoredState;
         private PhysicsManager physicsManager;
         private float stateEndCountdown = 0f;
-        private bool scoreFlagRaised = false;
+        private string scoringMessage;
 
         public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
@@ -36,17 +36,32 @@ namespace Pong
             };
 
             physicsManager = PhysicsManager.GetInstance();
-        }
 
+            ObserversDict = new Dictionary<EventType, List<IObserver>>();
+        }
 
         public void AddObserver(EventType eventType, IObserver observer)
         {
-            throw new NotImplementedException();
+            if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+            {
+                observers.Add(observer);
+            }
+
+            else
+            {
+                ObserversDict.Add(eventType, new List<IObserver> { observer });
+            }
         }
 
         public void Notify(EventType eventType, object eventData)
         {
-            throw new NotImplementedException();
+            if (ObserversDict.TryGetValue(eventType, out List<IObserver> observers))
+            {
+                foreach (var observer in observers)
+                {
+                    observer.OnNotify(eventData);
+                }
+            }
         }
 
         public void OnNotify(object eventData)
@@ -56,6 +71,8 @@ namespace Pong
             {
                 new Machine(0f, FSM_SCORED_BEGIN_COUNTDOWN, stateEndCountdown)
             };
+
+            scoringMessage = eventData as string;
         }
 
         public void RemoveObserver(EventType eventType, IObserver observer)
@@ -78,24 +95,19 @@ namespace Pong
                     // allow the ball to move in random direction
                     physicsManager.SetBallDirection();
 
-                    // reset statetime
-                    //serveState[i].StateTime = 0f;
-
                     // clear the serveState vector
                     serveState = new Machine[0];
                     playingState = new Machine[1]
                     {
                         new Machine(0f, FSM_PLAYING_BEGIN_COUNTDOWN, stateEndCountdown)
                     };
-
-                    Debug.Write("Ball served");
                 }
 
+                // ball stays stationary
                 else
                 {
                     // display countdown
-
-                    // ball stays stationary
+                    Notify(EventType.FSM_SERVE_DISPLAY_COUNTDOWN_MESSAGE, serveState[i].StateTime);
                 }
             }
 
@@ -118,16 +130,13 @@ namespace Pong
                 else if (scoredState[i].StateTime > FSM_SCORED_BEGIN_COUNTDOWN && scoredState[i].StateTime <= FSM_SCORED_INTERMEDIATE_TIME)
                 {
                     // display text stating someone has scored
-                    Debug.WriteLine("Scored");
+                    Notify(EventType.FSM_DISPLAY_SCORED_MESSAGE, scoringMessage);
                 }
 
                 else if (scoredState[i].StateTime > FSM_SCORED_INTERMEDIATE_TIME + FSM_SCORED_BEGIN_COUNTDOWN)
                 {
                     // reset ball position
                     physicsManager.ResetBallPosition();
-
-                    // reset statetime
-                    //scoredState[i].StateTime = 0f;
 
                     scoredState = new Machine[0];
 

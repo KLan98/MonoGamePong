@@ -1,25 +1,77 @@
-﻿using System;
-using LanMonoGameLibrary;
+﻿using LanMonoGameLibrary;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Diagnostics;
+using static Pong.GameConstants;
 
 namespace Pong
 {
-    public class TextRenderManager : IObserver
+    public class TextRenderManager
     {
         private AssetsManager assetsManager;
         private SpriteFont[] fonts;
+        private GameText[] gameTexts;
 
         public TextRenderManager()
         {
             assetsManager = AssetsManager.GetInstance();
             fonts = assetsManager.GetFonts();
+            gameTexts = assetsManager.GetGameTexts();
+
+            gameTexts[0].Position = Vector2.Zero;
+            gameTexts[1].Position = new Vector2 { X = VIRTUAL_WIDTH - gameTexts[1].SpriteFont.MeasureString(gameTexts[1].Text).X, Y = 0};
+            gameTexts[2].Position = new Vector2 { X = VIRTUAL_WIDTH / 2, Y = VIRTUAL_HEIGHT / 2 };
         }
 
-        // Will be observer of PongFSM 
-        public void OnNotify(object eventData)
+        public void OnScored(object eventData)
         {
-            throw new NotImplementedException();
+            string scoringMessage = eventData as string;
+
+            if (scoringMessage != null)
+            {
+                gameTexts[2].Text = scoringMessage;
+                gameTexts[2].CenterOrigin();
+            }
+        }
+
+        public void OnPlayerScored(object eventData)
+        {
+
+        }
+
+        public void OnComScored(object eventData)
+        {
+
+        }
+
+        public void OnServeCountDown(object eventData)
+        {
+            string countDownMessage;
+
+            float stateTime = (float)eventData;
+            if (stateTime <= 1f)
+            {
+                countDownMessage = "3";
+            }
+
+            else if (1f < stateTime && stateTime <= 2f)
+            {
+                countDownMessage = "2";
+            }
+
+            else if (2f < stateTime && stateTime <= 2.9f)
+            {
+                countDownMessage = "1";
+            }
+
+            else
+            {
+                countDownMessage = "";
+            }
+
+            gameTexts[2].Text = countDownMessage;
+            gameTexts[2].CenterOrigin();
         }
 
         public void UpdateDraw(SpriteBatch spriteBatch)
@@ -29,10 +81,10 @@ namespace Pong
                 return;
             }
 
-            //for (int i = 0; i < fonts.Length; i++)
-            //{
-            //    spriteBatch.DrawString(fonts[i], "hello world", Vector2.Zero, Color.White);
-            //}
+            for (int i = 0; i < gameTexts.Length; i++)
+            {
+                gameTexts[i].Draw(spriteBatch);
+            }
         }
     }
 }

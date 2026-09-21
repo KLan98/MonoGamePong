@@ -144,5 +144,8 @@ public class MyGame : Core, IObserver
         physicsManager.AddObserver(PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
         //physicsManager.AddObserver(PHYSICS_MAMAGER_SCORED, scoringManager);
         physicsManager.AddObserver(PHYSICS_MAMAGER_SCORED, pongFSM);
+
+        pongFSM.AddObserver(FSM_SERVE_DISPLAY_COUNTDOWN_MESSAGE, new DelegateObserver(textRenderManager.OnServeCountDown));
+        pongFSM.AddObserver(FSM_DISPLAY_SCORED_MESSAGE, new DelegateObserver(textRenderManager.OnScored));
     }
 }

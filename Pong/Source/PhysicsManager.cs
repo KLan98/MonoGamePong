@@ -79,8 +79,8 @@ namespace Pong
             };
             ballEasingTimeElapsed = new float[1];
 
-            screenVWidth = (int)core.GetVirtualResolution().X;
-            screenVHeight = (int)core.GetVirtualResolution().Y;
+            screenVWidth = (int)screenVRes.X;
+            screenVHeight = (int)screenVRes.Y;
 
             // Updated based on screen resolution
             topCollider = new Rectangle(0, 0, screenVWidth, 1);
@@ -271,17 +271,13 @@ namespace Pong
                 else if (predictedRect.Intersects(leftCollider))
                 {
                     // increment point for com
-                    Notify(EventType.PHYSICS_MAMAGER_SCORED, 1);
-                    //ResetBallPosition();
-                    //newPosition = ballsOnScreen[0].Position;
+                    Notify(EventType.PHYSICS_MAMAGER_SCORED, COM_SCORED_MESSAGE);
                 }
 
                 else if (predictedRect.Intersects(rightCollider))
                 {
                     // increment point for player
-                    Notify(EventType.PHYSICS_MAMAGER_SCORED, 0);
-                    //ResetBallPosition();
-                    //newPosition = ballsOnScreen[0].Position;
+                    Notify(EventType.PHYSICS_MAMAGER_SCORED, PLAYER_SCORED_MESSAGE);
                 }
 
                 else if (predictedRect.Intersects(playerCollider))

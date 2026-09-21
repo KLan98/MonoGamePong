@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using static Pong.GameConstants;
+
 namespace Pong
 {
     public class AssetsManager : IObserver, ISubject
@@ -22,6 +24,7 @@ namespace Pong
         private Vector2[] sizeVector;
         private TextureRegion ballTextureRegion;
         private SpriteFont[] fonts;
+        private GameText[] gameTexts;
 
         public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
@@ -30,7 +33,6 @@ namespace Pong
             this.content = content;
 
             spriteSheet = content.Load<Texture2D>("PongAssets/spritesheet");
-            InitAssets();
 
             SpriteFont hudFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 HUD");
             SpriteFont ammoFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 Ammo");
@@ -42,6 +44,8 @@ namespace Pong
                 ammoFont,
                 codecFont,
             };
+
+            InitAssets();
 
             ObserversDict = new Dictionary<EventType, List<IObserver>>();
         }
@@ -110,6 +114,16 @@ namespace Pong
             throw new InvalidOperationException("fonts array is currently empty");
         }
 
+        public GameText[] GetGameTexts()
+        {
+            if (gameTexts.Length > 0)
+            {
+                return gameTexts;
+            }
+
+            throw new InvalidOperationException("gameTexts array is currently empty");
+        }
+
         //--------------------------------------PRIVATE METHODS---------------------------------
         private void InitAssets()
         {
@@ -133,7 +147,7 @@ namespace Pong
             // Create sprites from texture regions
             Sprite ballSprite = new Sprite(ballTextureRegion);
             ballSprite.LayerDepth = 1.0f;
-            //ballSprite.CenterOrigin(); needed for circle collider, currently using rect collider
+            ballSprite.CenterOrigin(); 
 
             Sprite ballMotionSprite = new Sprite(ballMotionTextureRegion);
             ballMotionSprite.LayerDepth = 1.0f;
@@ -170,6 +184,26 @@ namespace Pong
             ballSprites = new Sprite[1]
             {
             ballSprite
+            };
+
+            GameText genericMessage = new GameText(fonts[0]);
+            genericMessage.LayerDepth = 1.0f;
+
+            GameText playerScore = new GameText(fonts[0]);
+            playerScore.LayerDepth = 1.0f;
+            playerScore.Text = "0";
+            playerScore.Origin = playerScoreBarSprite.Origin;
+
+            GameText comScore = new GameText(fonts[0]);
+            comScore.LayerDepth = 1.0f;
+            comScore.Text = "0";
+            comScore.Origin = comScoreBarSprite.Origin;
+
+            gameTexts = new GameText[3]
+            {
+                playerScore,
+                comScore,
+                genericMessage
             };
         }
 
