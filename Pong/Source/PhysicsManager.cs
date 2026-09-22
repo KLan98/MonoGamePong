@@ -144,7 +144,7 @@ namespace Pong
 
             float angle = (float)(random.NextDouble() * MathHelper.TwoPi);
             Vector2 ballDirection = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
-            ballsOnScreen[0].Direction = ballDirection; 
+            ballsOnScreen[0].Direction = ballDirection;
         }
 
         // Add force to ball
@@ -250,7 +250,10 @@ namespace Pong
                 Vector2 velocity = easedSpeed * direction; // speed * direction
                 Vector2 newPosition = currentPosition + movedDistance;
 
-                Rectangle predictedRect = new Rectangle((int)newPosition.X, (int)newPosition.Y, (int)ballSprites[i].Size.X, (int)ballSprites[i].Size.Y);
+                // with a 16×16 ball (Origin = (8,8)) sitting at Position = (100,100):
+                //-The sprite visually spans x:[92, 108], y: [92, 108] — because it's drawn centered on 100,100.
+                //- Its top - left corner on screen is (92, 92) = (100 - 8, 100 - 8) = Position - Origin.
+                Rectangle predictedRect = new Rectangle((int)newPosition.X - (int)ballSprites[i].Origin.X, (int)newPosition.Y - (int)ballSprites[i].Origin.Y, (int)ballSprites[i].Size.X, (int)ballSprites[i].Size.Y);
 
                 Rectangle playerCollider = new Rectangle((int)movingPhysics[0].Position.X, (int)movingPhysics[0].Position.Y, (int)movingSprites[0].Size.X, (int)movingSprites[0].Size.Y);
 
