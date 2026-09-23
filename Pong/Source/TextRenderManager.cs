@@ -49,7 +49,11 @@ namespace Pong
         {
             string countDownMessage;
 
-            float stateTime = (float)eventData;
+            if (!Core.TryGet(eventData, out float stateTime))
+            {
+                return;
+            }
+
             if (stateTime <= 1f)
             {
                 countDownMessage = "3";

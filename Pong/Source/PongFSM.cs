@@ -133,7 +133,7 @@ namespace Pong
                     Notify(EventType.FSM_DISPLAY_SCORED_MESSAGE, scoringMessage);
                 }
 
-                else if (scoredState[i].StateTime > FSM_SCORED_INTERMEDIATE_TIME + FSM_SCORED_BEGIN_COUNTDOWN)
+                else if (scoredState[i].StateTime > FSM_SCORED_INTERMEDIATE_TIME)
                 {
                     // reset ball position
                     physicsManager.ResetBallPosition();

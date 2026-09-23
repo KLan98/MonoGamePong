@@ -110,6 +110,18 @@ public class MyGame : Core, IObserver
         base.Draw(gameTime);
     }
 
+    public void OnNotify(object eventData)
+    {
+        if(!TryGet(eventData, out int numberOfBalls))
+        {
+            return;
+        }
+        Debug.WriteLine("event 3 fired");
+
+        // Only call this after ballsOnScreen array has been updated
+        ballSprites = assetsManager.GetBallSprites();
+    }
+
     //----------------------------------PRIVATE METHODS----------------------------------------------
     private void ScaleBoardToFitScreen()
     {
@@ -123,15 +135,6 @@ public class MyGame : Core, IObserver
 
         // set the scale factor for board sprite once!
         boardSprite.Scale = new Vector2(scaledX, scaledY);
-    }
-
-    public void OnNotify(object eventData)
-    {
-        int numberOfBalls = (int)eventData;
-        Debug.WriteLine("event 3 fired");
-
-        // Only call this after ballsOnScreen array has been updated
-        ballSprites = assetsManager.GetBallSprites();
     }
 
     /// <summary>

@@ -396,8 +396,11 @@ namespace Pong
 
         public void OnNotify(object eventData)
         {
-            Debug.WriteLine("event 2 fired");
-            int numberOfBalls = (int)eventData;
+            if (!Core.TryGet(eventData, out int numberOfBalls))
+            {
+                return;
+            }
+
             // update ball-related information, from assets manager
             ballSprites = assetsManager.GetBallSprites();
             ballEasingTimeElapsed = new float[numberOfBalls];

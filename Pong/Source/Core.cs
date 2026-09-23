@@ -177,5 +177,20 @@ public class Core : Game
         return x * x;
     }
 
+    //--------------------------------------STATIC METHODS------------------------
+    public static bool TryGet<T>(object eventData, out T result)
+    {
+        // if the eventData is of type T with value v 
+        // then assign the result as value v
+        if (eventData is T v)
+        {
+            result = v;
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
     //-----------------------------------------------PRIVATE METHODS---------------------------------------
 }
