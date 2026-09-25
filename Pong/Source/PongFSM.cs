@@ -66,13 +66,17 @@ namespace Pong
 
         public void OnNotify(object eventData)
         {
-            playingState = new Machine[0];
-            scoredState = new Machine[1]
+            // Ignore repeat scoring event while not in playing state
+            if (playingState.Length > 0 && scoredState.Length == 0)
             {
-                new Machine(0f, FSM_SCORED_BEGIN_COUNTDOWN, stateEndCountdown)
-            };
+                playingState = new Machine[0];
+                scoredState = new Machine[1]
+                {
+                    new Machine(0f, FSM_SCORED_BEGIN_COUNTDOWN, stateEndCountdown)
+                };
 
-            scoringMessage = eventData as string;
+                scoringMessage = eventData as string;
+            }
         }
 
         public void RemoveObserver(EventType eventType, IObserver observer)
