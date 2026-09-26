@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 using static Pong.GameConstants;
+using static Pong.EventType;
 
 namespace Pong
 {
@@ -223,7 +224,7 @@ namespace Pong
                 ballSprites[i] = ballSprite;
             }
 
-            Notify(EventType.ASSET_MAMAGER_BALL_ASSETS_UPDATED, numberOfBalls);
+            Notify(ASSET_MAMAGER_BALL_ASSETS_UPDATED, numberOfBalls);
         }
 
         public void Notify(EventType eventType, object eventData)

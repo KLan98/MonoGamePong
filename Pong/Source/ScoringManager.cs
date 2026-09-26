@@ -4,24 +4,35 @@ using System.Diagnostics;
 
 namespace Pong
 {
-    public class ScoringManager : IObserver
+    public class ScoringManager
     {
-        private int[] scoreBoards; // scores of player and com, index 0 for player, index 1 for com
+        private int[] scores; // scores of player and com, index 0 for player, index 1 for com
+        private TextRenderManager textRenderManager;
 
-        public ScoringManager()
+        public ScoringManager(TextRenderManager textRenderManager)
         {
-            scoreBoards = new int[2]
+            scores = new int[2]
             {
                 0,
                 0
             };
+
+            this.textRenderManager = textRenderManager;
         }
 
-        public void OnNotify(object eventData)
+        public void OnUpdateScore(object eventData)
         {
-            int scoreBoardID = (int)eventData;
-            //Debug.WriteLine($"Increment score on scoreboard {scoreBoardID}");
-            scoreBoards[scoreBoardID]++;    
+            if (!Core.TryGet(eventData, out int scoringIndex))
+            {
+                return;
+            }
+
+            scores[scoringIndex]++;
+
+            int score = scores[scoringIndex];
+
+            // update the scoringIndex
+            textRenderManager.UpdateScoreBoard(score, scoringIndex);
         }
     }
 }

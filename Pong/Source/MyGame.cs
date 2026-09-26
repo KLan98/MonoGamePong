@@ -33,9 +33,9 @@ public class MyGame : Core, IObserver
         assetsManager = AssetsManager.Create(GetContentManager()); // pass this into assetManager's constructor for using observer pattern
         physicsManager = PhysicsManager.Create();
         inputManager = new InputManager(); // for now this input manager is exclusive
-        scoringManager = new ScoringManager();
         pongFSM = new PongFSM();
         textRenderManager = new TextRenderManager();
+        scoringManager = new ScoringManager(textRenderManager);
 
         // scale the board sprite to fit screen
         boardSprite = assetsManager.GetSprite(0);
@@ -146,9 +146,9 @@ public class MyGame : Core, IObserver
         assetsManager.AddObserver(ASSET_MAMAGER_BALL_ASSETS_UPDATED, physicsManager);
         physicsManager.AddObserver(PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
         //physicsManager.AddObserver(PHYSICS_MAMAGER_SCORED, scoringManager);
-        physicsManager.AddObserver(PHYSICS_MAMAGER_SCORED, pongFSM);
-
+        physicsManager.AddObserver(PHYSICS_MANAGER_SCORED, pongFSM);
+        pongFSM.AddObserver(FSM_SCORED_UPDATE_SCORE, new DelegateObserver(scoringManager.OnUpdateScore));
         pongFSM.AddObserver(FSM_SERVE_DISPLAY_COUNTDOWN_MESSAGE, new DelegateObserver(textRenderManager.OnServeCountDown));
-        pongFSM.AddObserver(FSM_DISPLAY_SCORED_MESSAGE, new DelegateObserver(textRenderManager.OnScored));
+        pongFSM.AddObserver(FSM_DISPLAY_SCORED_MESSAGE, new DelegateObserver(textRenderManager.OnDisplayScoringMessage));
     }
 }

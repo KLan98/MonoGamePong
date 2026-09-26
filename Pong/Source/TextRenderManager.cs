@@ -19,12 +19,12 @@ namespace Pong
             fonts = assetsManager.GetFonts();
             gameTexts = assetsManager.GetGameTexts();
 
-            gameTexts[0].Position = Vector2.Zero;
-            gameTexts[1].Position = new Vector2 { X = VIRTUAL_WIDTH - gameTexts[1].SpriteFont.MeasureString(gameTexts[1].Text).X, Y = 0};
+            gameTexts[0].Position = Vector2.Zero; // player's score
+            gameTexts[1].Position = new Vector2 { X = VIRTUAL_WIDTH - gameTexts[1].SpriteFont.MeasureString(gameTexts[1].Text).X, Y = 0}; // com's score
             gameTexts[2].Position = new Vector2 { X = VIRTUAL_WIDTH / 2, Y = VIRTUAL_HEIGHT / 2 };
         }
 
-        public void OnScored(object eventData)
+        public void OnDisplayScoringMessage(object eventData)
         {
             string scoringMessage = eventData as string;
 
@@ -35,14 +35,9 @@ namespace Pong
             }
         }
 
-        public void OnPlayerScored(object eventData)
+        public void UpdateScoreBoard(int score, int index)
         {
-
-        }
-
-        public void OnComScored(object eventData)
-        {
-
+            gameTexts[index].Text = score.ToString();
         }
 
         public void OnServeCountDown(object eventData)

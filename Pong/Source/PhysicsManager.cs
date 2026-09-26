@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using static Pong.GameConstants;
+using static Pong.EventType;
 
 namespace Pong
 {
@@ -29,6 +30,8 @@ namespace Pong
         private Vector2 screenVRes;
         private AssetsManager assetsManager;
         private Random random = new Random();
+        private ScoringData comScoringData;
+        private ScoringData playerScoringData;
 
         public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
@@ -91,6 +94,9 @@ namespace Pong
             normal = Vector2.Zero;
 
             ObserversDict = new Dictionary<EventType, List<IObserver>>();
+
+            comScoringData = new ScoringData(COM_SCORED_MESSAGE, 1);
+            playerScoringData = new ScoringData(PLAYER_SCORED_MESSAGE, 0);
         }
 
         public static PhysicsManager Create()
@@ -274,13 +280,13 @@ namespace Pong
                 else if (predictedRect.Intersects(leftCollider))
                 {
                     // increment point for com
-                    Notify(EventType.PHYSICS_MAMAGER_SCORED, COM_SCORED_MESSAGE);
+                    Notify(PHYSICS_MANAGER_SCORED, comScoringData);
                 }
 
                 else if (predictedRect.Intersects(rightCollider))
                 {
                     // increment point for player
-                    Notify(EventType.PHYSICS_MAMAGER_SCORED, PLAYER_SCORED_MESSAGE);
+                    Notify(PHYSICS_MANAGER_SCORED, playerScoringData);
                 }
 
                 else if (predictedRect.Intersects(playerCollider))
@@ -422,7 +428,7 @@ namespace Pong
                 ballsOnScreen[i] = ballPhysics;
             }
 
-            Notify(EventType.PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, numberOfBalls);
+            Notify(PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, numberOfBalls);
         }
 
         public void Notify(EventType eventType, object eventData)
@@ -470,6 +476,18 @@ namespace Pong
             Board,
             PlayerScoreBar,
             ComScoreBar
+        }
+    }
+
+    public struct ScoringData
+    {
+        public string ScoringMessage;
+        public int EntityID;
+
+        public ScoringData(string scoringMessage, int entityID)
+        {
+            ScoringMessage = scoringMessage;
+            EntityID = entityID;
         }
     }
 }

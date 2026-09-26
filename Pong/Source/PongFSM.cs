@@ -4,6 +4,7 @@ using System.Diagnostics;
 using LanMonoGameLibrary;
 using Microsoft.Xna.Framework;
 using static Pong.GameConstants;
+using static Pong.EventType;
 
 namespace Pong
 {
@@ -15,25 +16,21 @@ namespace Pong
         private PhysicsManager physicsManager;
         private float stateEndCountdown = 0f;
         private string scoringMessage;
+        private int scoringEntityID; // the ID of scoring entity for updating scoring backend
 
         public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
         public PongFSM()
         {
+            // serve state is the initial state
             serveState = new Machine[1]
             {
                 new Machine(0f, FSM_SERVE_BEGIN_COUNTDOWN, stateEndCountdown)
             };
 
-            playingState = new Machine[0]
-            {
-                //new Machine(stateTime, FSM_PLAYING_BEGIN_COUNTDOWN, stateEndCountdown)
-            };
+            playingState = new Machine[0];
 
-            scoredState = new Machine[0]
-            {
-                //new Machine(stateTime, FSM_SCORED_BEGIN_COUNTDOWN, stateEndCountdown)
-            };
+            scoredState = new Machine[0];
 
             physicsManager = PhysicsManager.GetInstance();
 
@@ -75,7 +72,13 @@ namespace Pong
                     new Machine(0f, FSM_SCORED_BEGIN_COUNTDOWN, stateEndCountdown)
                 };
 
-                scoringMessage = eventData as string;
+                if (!Core.TryGet(eventData, out ScoringData data))
+                {
+                    return;
+                }
+
+                scoringMessage = data.ScoringMessage;
+                scoringEntityID = data.EntityID;
             }
         }
 
@@ -111,7 +114,7 @@ namespace Pong
                 else
                 {
                     // display countdown
-                    Notify(EventType.FSM_SERVE_DISPLAY_COUNTDOWN_MESSAGE, serveState[i].StateTime);
+                    Notify(FSM_SERVE_DISPLAY_COUNTDOWN_MESSAGE, serveState[i].StateTime);
                 }
             }
 
@@ -133,8 +136,9 @@ namespace Pong
 
                 else if (scoredState[i].StateTime > FSM_SCORED_BEGIN_COUNTDOWN && scoredState[i].StateTime <= FSM_SCORED_INTERMEDIATE_TIME)
                 {
+
                     // display text stating someone has scored
-                    Notify(EventType.FSM_DISPLAY_SCORED_MESSAGE, scoringMessage);
+                    Notify(FSM_DISPLAY_SCORED_MESSAGE, scoringMessage);
                 }
 
                 else if (scoredState[i].StateTime > FSM_SCORED_INTERMEDIATE_TIME)
@@ -148,7 +152,10 @@ namespace Pong
                     {
                         new Machine(0f, FSM_SERVE_BEGIN_COUNTDOWN, stateEndCountdown)
                     };
-                    Debug.WriteLine("Return to serve");
+
+                    // update backend score, no distinction between frontend and backend
+                    // done on exit for avoiding multiple updates
+                    Notify(FSM_SCORED_UPDATE_SCORE, scoringEntityID);
                 }
             }
         }
