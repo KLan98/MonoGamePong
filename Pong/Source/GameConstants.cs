@@ -19,5 +19,6 @@
         public const string COM_SCORED_MESSAGE = "COM SCORED";
         public const float VIRTUAL_HEIGHT = 720f; // this is the resolution for mouse coordinates, sprite positions, UI layout, physics,these stay fixed internally
         public const float VIRTUAL_WIDTH = 1280f;
+        public const int AI_DEFAULT_DIFFICULTY = 1; // index into AIProfiles.Presets
     }
 }

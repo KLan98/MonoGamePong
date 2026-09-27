@@ -141,6 +141,12 @@ namespace Pong
             return ballsOnScreen[index].Position;
         }
 
+        // read-only view of every ball's physics, for systems that scan all balls (e.g. COM AI)
+        public ReadOnlySpan<EntityPhysics> GetBalls()
+        {
+            return ballsOnScreen;
+        }
+
         public void SetBallDirection()
         {
             if (ballsOnScreen.Length > 1)
