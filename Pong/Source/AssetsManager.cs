@@ -16,8 +16,6 @@ namespace Pong
     public class AssetsManager : IObserver, ISubject
     {
         private static AssetsManager instance;
-        private ContentManager content;
-        private TextureRegion[] textureRegions;
         private Sprite[] sprites;
         private Sprite[] movingSprites;
         private Sprite[] ballSprites;
@@ -31,8 +29,6 @@ namespace Pong
 
         private AssetsManager(ContentManager content)
         {
-            this.content = content;
-
             spriteSheet = content.Load<Texture2D>("PongAssets/spritesheet");
 
             SpriteFont hudFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 HUD");
@@ -135,15 +131,6 @@ namespace Pong
             TextureRegion computerTextureRegion = new TextureRegion(spriteSheet, boardTextureRegion.GetRectX() + boardTextureRegion.GetRectWidth(), 0, 17, 120);
             TextureRegion playerTextureRegion = new TextureRegion(spriteSheet, computerTextureRegion.GetRectX() + computerTextureRegion.GetRectWidth(), 0, 17, 120);
             TextureRegion scoreBarTextureRegion = new TextureRegion(spriteSheet, playerTextureRegion.GetRectX() + playerTextureRegion.GetRectWidth(), 0, 341, 47);
-
-            textureRegions = new TextureRegion[6] {
-            ballTextureRegion,
-            ballMotionTextureRegion,
-            boardTextureRegion,
-            computerTextureRegion,
-            playerTextureRegion,
-            scoreBarTextureRegion,
-            };
 
             // Create sprites from texture regions
             Sprite ballSprite = new Sprite(ballTextureRegion);

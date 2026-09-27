@@ -145,7 +145,6 @@ public class MyGame : Core, IObserver
         debugConsole.AddObserver(DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, assetsManager);
         assetsManager.AddObserver(ASSET_MAMAGER_BALL_ASSETS_UPDATED, physicsManager);
         physicsManager.AddObserver(PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
-        //physicsManager.AddObserver(PHYSICS_MAMAGER_SCORED, scoringManager);
         physicsManager.AddObserver(PHYSICS_MANAGER_SCORED, pongFSM);
         pongFSM.AddObserver(FSM_SCORED_UPDATE_SCORE, new DelegateObserver(scoringManager.OnUpdateScore));
         pongFSM.AddObserver(FSM_SERVE_DISPLAY_COUNTDOWN_MESSAGE, new DelegateObserver(textRenderManager.OnServeCountDown));

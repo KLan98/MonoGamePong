@@ -10,13 +10,11 @@ namespace Pong
     public class TextRenderManager
     {
         private AssetsManager assetsManager;
-        private SpriteFont[] fonts;
         private GameText[] gameTexts;
 
         public TextRenderManager()
         {
             assetsManager = AssetsManager.GetInstance();
-            fonts = assetsManager.GetFonts();
             gameTexts = assetsManager.GetGameTexts();
 
             gameTexts[0].Position = Vector2.Zero; // player's score
@@ -75,7 +73,7 @@ namespace Pong
 
         public void UpdateDraw(SpriteBatch spriteBatch)
         {
-            if (fonts.Length == 0)
+            if (gameTexts.Length == 0)
             {
                 return;
             }
