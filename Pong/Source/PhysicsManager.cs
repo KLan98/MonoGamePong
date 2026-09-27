@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using static Pong.GameConstants;
+using static Pong.EventType;
 
 namespace Pong
 {
@@ -28,6 +30,8 @@ namespace Pong
         private Vector2 screenVRes;
         private AssetsManager assetsManager;
         private Random random = new Random();
+        private ScoringData comScoringData;
+        private ScoringData playerScoringData;
 
         public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
@@ -43,13 +47,13 @@ namespace Pong
 
             // init physics objects 
             Vector2 playerInitPos = new Vector2 { X = 0, Y = screenVRes.Y / 2 - movingSprites[0].Size.Y / 2 };
-            EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero, GameConstants.PLAYER_MASS);
+            EntityPhysics playerPhysics = new EntityPhysics(playerInitPos, Vector2.Zero, PLAYER_MASS);
 
             Vector2 comIntPos = new Vector2 { X = screenVRes.X - movingSprites[1].Size.X, Y = playerInitPos.Y };
-            EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero, GameConstants.COM_MASS);
+            EntityPhysics comPhysics = new EntityPhysics(comIntPos, Vector2.Zero, COM_MASS);
 
             Vector2 ballInitPos = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
-            EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero, GameConstants.BALL_MASS);
+            EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, Vector2.Zero, BALL_MASS);
 
             // Init positions of non-moving objects
             Vector2 boardInitPos = Vector2.Zero;
@@ -76,11 +80,10 @@ namespace Pong
             {
             ballPhysics
             };
-            ballsOnScreen[0].Direction = new Vector2(-1, 0); // reference the array index directly after its initialization
             ballEasingTimeElapsed = new float[1];
 
-            screenVWidth = (int)core.GetVirtualResolution().X;
-            screenVHeight = (int)core.GetVirtualResolution().Y;
+            screenVWidth = (int)screenVRes.X;
+            screenVHeight = (int)screenVRes.Y;
 
             // Updated based on screen resolution
             topCollider = new Rectangle(0, 0, screenVWidth, 1);
@@ -91,6 +94,9 @@ namespace Pong
             normal = Vector2.Zero;
 
             ObserversDict = new Dictionary<EventType, List<IObserver>>();
+
+            comScoringData = new ScoringData(COM_SCORED_MESSAGE, 1);
+            playerScoringData = new ScoringData(PLAYER_SCORED_MESSAGE, 0);
         }
 
         public static PhysicsManager Create()
@@ -135,6 +141,18 @@ namespace Pong
             return ballsOnScreen[index].Position;
         }
 
+        public void SetBallDirection()
+        {
+            if (ballsOnScreen.Length > 1)
+            {
+                return;
+            }
+
+            float angle = (float)(random.NextDouble() * MathHelper.TwoPi);
+            Vector2 ballDirection = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
+            ballsOnScreen[0].Direction = ballDirection;
+        }
+
         // Add force to ball
         public void AddForce(int index, Vector2 force)
         {
@@ -166,13 +184,13 @@ namespace Pong
                 }
 
                 // easing time so far / total ease duration, clamp it so that it won't exceed 1.0f
-                float normalizedElapsed = MathF.Min(1.0f, easingTimeElapsed[i] / GameConstants.EASING_DURATION);
+                float normalizedElapsed = MathF.Min(1.0f, easingTimeElapsed[i] / EASING_DURATION);
 
                 // Easing function use normalized time as input 
                 float easedTime = core.EaseInQuad(normalizedElapsed);
 
                 // lerp between current speed and max speed, eased time as input, clamped between current speed and max speed
-                float easedSpeed = MathHelper.Lerp(currentSpeed, GameConstants.MAX_SPEED, easedTime);
+                float easedSpeed = MathHelper.Lerp(currentSpeed, MAX_SPEED, easedTime);
 
                 float displacement = easedSpeed * deltaTime;
 
@@ -224,13 +242,13 @@ namespace Pong
                 }
 
                 // easing time so far / total ease duration, clamp it so that it won't exceed 1.0f
-                float normalizedElapsed = MathF.Min(1.0f, ballEasingTimeElapsed[i] / GameConstants.EASING_DURATION);
+                float normalizedElapsed = MathF.Min(1.0f, ballEasingTimeElapsed[i] / EASING_DURATION);
 
                 // Easing function use normalized time as input 
                 float easedTime = core.EaseInQuad(normalizedElapsed);
 
                 // lerp between current speed and max speed, eased time as input, clamped between current speed and max speed
-                float easedSpeed = MathHelper.Lerp(currentSpeed, GameConstants.MAX_SPEED, easedTime);
+                float easedSpeed = MathHelper.Lerp(currentSpeed, MAX_SPEED, easedTime);
 
                 float displacement = easedSpeed * deltaTime;
 
@@ -238,7 +256,10 @@ namespace Pong
                 Vector2 velocity = easedSpeed * direction; // speed * direction
                 Vector2 newPosition = currentPosition + movedDistance;
 
-                Rectangle predictedRect = new Rectangle((int)newPosition.X, (int)newPosition.Y, (int)ballSprites[i].Size.X, (int)ballSprites[i].Size.Y);
+                // with a 16×16 ball (Origin = (8,8)) sitting at Position = (100,100):
+                //-The sprite visually spans x:[92, 108], y: [92, 108] — because it's drawn centered on 100,100.
+                //- Its top - left corner on screen is (92, 92) = (100 - 8, 100 - 8) = Position - Origin.
+                Rectangle predictedRect = new Rectangle((int)newPosition.X - (int)ballSprites[i].Origin.X, (int)newPosition.Y - (int)ballSprites[i].Origin.Y, (int)ballSprites[i].Size.X, (int)ballSprites[i].Size.Y);
 
                 Rectangle playerCollider = new Rectangle((int)movingPhysics[0].Position.X, (int)movingPhysics[0].Position.Y, (int)movingSprites[0].Size.X, (int)movingSprites[0].Size.Y);
 
@@ -258,14 +279,14 @@ namespace Pong
 
                 else if (predictedRect.Intersects(leftCollider))
                 {
-                    Debug.WriteLine("Enemy scored");
-                    // increment point
+                    // increment point for com
+                    Notify(PHYSICS_MANAGER_SCORED, comScoringData);
                 }
 
                 else if (predictedRect.Intersects(rightCollider))
                 {
-                    Debug.WriteLine("Player scored");
-                    // increment point
+                    // increment point for player
+                    Notify(PHYSICS_MANAGER_SCORED, playerScoringData);
                 }
 
                 else if (predictedRect.Intersects(playerCollider))
@@ -275,7 +296,7 @@ namespace Pong
 
                     // compute velocity and add the impulse based on that added impulse
                     Vector2 paddleVelocity = movingPhysics[(int)MovingEntities.Player].Velocity;
-                    float massRatio = GameConstants.PLAYER_MASS / GameConstants.BALL_MASS;
+                    float massRatio = PLAYER_MASS / BALL_MASS;
                     AddImpulse(i, massRatio * paddleVelocity);
                 }
 
@@ -286,7 +307,7 @@ namespace Pong
 
                     // compute velocity and add the impulse based on that added impulse
                     Vector2 paddleVelocity = movingPhysics[(int)MovingEntities.Com].Velocity;
-                    float massRatio = GameConstants.PLAYER_MASS / GameConstants.BALL_MASS;
+                    float massRatio = PLAYER_MASS / BALL_MASS;
                     AddImpulse(i, massRatio * paddleVelocity);
                 }
 
@@ -301,7 +322,7 @@ namespace Pong
                     // impulse (J) is a change in momentum: J = m * Δv, so Δv = J / m
                     // dividing the stored impulse by the ball's mass converts it into a velocity change,
                     // then adding it "kicks" the current velocity instantly (e.g. paddle hit)
-                    velocity += impulse / GameConstants.BALL_MASS;
+                    velocity += impulse / BALL_MASS;
 
                     // velocity is a combined speed+direction vector; its length is the new scalar speed
                     easedSpeed = velocity.Length();
@@ -374,12 +395,18 @@ namespace Pong
         public void ResetBallPosition()
         {
             ballsOnScreen[0].Position = new Vector2 { X = screenVRes.X / 2, Y = screenVRes.Y / 2 };
+            ballsOnScreen[0].Direction = Vector2.Zero;
+            ballsOnScreen[0].Speed = 0;
+            ballEasingTimeElapsed[0] = 0;
         }
 
         public void OnNotify(object eventData)
         {
-            Debug.WriteLine("event 2 fired");
-            int numberOfBalls = (int)eventData;
+            if (!Core.TryGet(eventData, out int numberOfBalls))
+            {
+                return;
+            }
+
             // update ball-related information, from assets manager
             ballSprites = assetsManager.GetBallSprites();
             ballEasingTimeElapsed = new float[numberOfBalls];
@@ -397,11 +424,11 @@ namespace Pong
                 };
                 float angle = (float)(random.NextDouble() * MathHelper.TwoPi);
                 Vector2 ballDirection = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
-                EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, ballDirection, GameConstants.BALL_MASS);
+                EntityPhysics ballPhysics = new EntityPhysics(ballInitPos, ballDirection, BALL_MASS);
                 ballsOnScreen[i] = ballPhysics;
             }
 
-            Notify(EventType.PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, numberOfBalls);
+            Notify(PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, numberOfBalls);
         }
 
         public void Notify(EventType eventType, object eventData)
@@ -449,6 +476,18 @@ namespace Pong
             Board,
             PlayerScoreBar,
             ComScoreBar
+        }
+    }
+
+    public struct ScoringData
+    {
+        public string ScoringMessage;
+        public int EntityID;
+
+        public ScoringData(string scoringMessage, int entityID)
+        {
+            ScoringMessage = scoringMessage;
+            EntityID = entityID;
         }
     }
 }

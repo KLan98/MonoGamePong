@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
+using static Pong.EventType;
 
 namespace Pong;
 
@@ -18,9 +19,9 @@ public class MyGame : Core, IObserver
     private Sprite[] ballSprites;
     private Sprite boardSprite;
     private PhysicsManager physicsManager;
-
-    //---------------------------------PROPERTIES-----------------------------------
-    public int[] NumberOfBalls { get; private set; }
+    private ScoringManager scoringManager;
+    private PongFSM pongFSM;
+    private TextRenderManager textRenderManager;
 
     public MyGame() : base("Pong", (int)virtualWidth, (int)virtualHeight, false)
     {
@@ -32,6 +33,9 @@ public class MyGame : Core, IObserver
         assetsManager = AssetsManager.Create(GetContentManager()); // pass this into assetManager's constructor for using observer pattern
         physicsManager = PhysicsManager.Create();
         inputManager = new InputManager(); // for now this input manager is exclusive
+        pongFSM = new PongFSM();
+        textRenderManager = new TextRenderManager();
+        scoringManager = new ScoringManager(textRenderManager);
 
         // scale the board sprite to fit screen
         boardSprite = assetsManager.GetSprite(0);
@@ -61,6 +65,7 @@ public class MyGame : Core, IObserver
         inputManager.UpdateInput();
         physicsManager.UpdatePhysics(gameTime);
         //Debug.WriteLine(physicsManager.TestElapsedGameTime(gameTime));
+        pongFSM.UpdateMachines(gameTime);
         base.Update(gameTime);
     }
 
@@ -92,6 +97,9 @@ public class MyGame : Core, IObserver
             sprites[i].Draw(SpriteBatch, physicsManager.GetStaticPosition(i));
         }
 
+        // Draw text
+        textRenderManager.UpdateDraw(SpriteBatch);
+
         SpriteBatch.End();
 
         // Draw debug UI
@@ -100,6 +108,18 @@ public class MyGame : Core, IObserver
         debugConsole.ImGuiRenderer.EndLayout();
 
         base.Draw(gameTime);
+    }
+
+    public void OnNotify(object eventData)
+    {
+        if(!TryGet(eventData, out int numberOfBalls))
+        {
+            return;
+        }
+        Debug.WriteLine("event 3 fired");
+
+        // Only call this after ballsOnScreen array has been updated
+        ballSprites = assetsManager.GetBallSprites();
     }
 
     //----------------------------------PRIVATE METHODS----------------------------------------------
@@ -117,22 +137,17 @@ public class MyGame : Core, IObserver
         boardSprite.Scale = new Vector2(scaledX, scaledY);
     }
 
-    public void OnNotify(object eventData)
-    {
-        int numberOfBalls = (int)eventData;
-        Debug.WriteLine("event 3 fired");
-
-        // Only call this after ballsOnScreen array has been updated
-        ballSprites = assetsManager.GetBallSprites();
-    }
-
     /// <summary>
     /// Add observers for all subjects once all components have been constructed
     /// </summary>
     private void AddObservers()
     {
-        debugConsole.AddObserver(EventType.DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, assetsManager);
-        assetsManager.AddObserver(EventType.ASSET_MAMAGER_BALL_ASSETS_UPDATED, physicsManager);
-        physicsManager.AddObserver(EventType.PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
+        debugConsole.AddObserver(DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, assetsManager);
+        assetsManager.AddObserver(ASSET_MAMAGER_BALL_ASSETS_UPDATED, physicsManager);
+        physicsManager.AddObserver(PHYSICS_MANAGER_BALL_PHYSICS_UPDATED, this);
+        physicsManager.AddObserver(PHYSICS_MANAGER_SCORED, pongFSM);
+        pongFSM.AddObserver(FSM_SCORED_UPDATE_SCORE, new DelegateObserver(scoringManager.OnUpdateScore));
+        pongFSM.AddObserver(FSM_SERVE_DISPLAY_COUNTDOWN_MESSAGE, new DelegateObserver(textRenderManager.OnServeCountDown));
+        pongFSM.AddObserver(FSM_DISPLAY_SCORED_MESSAGE, new DelegateObserver(textRenderManager.OnDisplayScoringMessage));
     }
 }

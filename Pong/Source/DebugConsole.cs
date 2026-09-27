@@ -10,6 +10,8 @@ using System;
 using Microsoft.VisualBasic;
 using System.Collections.Generic;
 
+using static Pong.EventType;
+
 namespace Pong
 {
     public class DebugConsole : ISubject
@@ -129,7 +131,7 @@ namespace Pong
                     // this will cause a trigger in every component that makes up the ball such as physics, assets,...
                     // perfect use case for broadcast/ listener event trigger since this approach scales better whenever there are more components
                     // in addition, the Draw update needs to know about the number of balls to be drawn, another listener to be added
-                    Notify(EventType.DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, balls);
+                    Notify(DEBUG_CONSOLE_NUMBER_OF_BALLS_CHOSEN, balls);
                 }
 
                 // Menu bar

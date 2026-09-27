@@ -8,27 +8,40 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using static Pong.GameConstants;
+using static Pong.EventType;
+
 namespace Pong
 {
     public class AssetsManager : IObserver, ISubject
     {
         private static AssetsManager instance;
-        private ContentManager content;
-        private TextureRegion[] textureRegions;
         private Sprite[] sprites;
         private Sprite[] movingSprites;
         private Sprite[] ballSprites;
         private Texture2D spriteSheet;
         private Vector2[] sizeVector;
         private TextureRegion ballTextureRegion;
+        private SpriteFont[] fonts;
+        private GameText[] gameTexts;
 
         public Dictionary<EventType, List<IObserver>> ObserversDict { get; set; }
 
         private AssetsManager(ContentManager content)
         {
-            this.content = content;
-
             spriteSheet = content.Load<Texture2D>("PongAssets/spritesheet");
+
+            SpriteFont hudFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 HUD");
+            SpriteFont ammoFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 Ammo");
+            SpriteFont codecFont = content.Load<SpriteFont>("PongAssets/MGS1_Fonts/MGS1 Codec");
+
+            fonts = new SpriteFont[3]
+            {
+                hudFont,
+                ammoFont,
+                codecFont,
+            };
+
             InitAssets();
 
             ObserversDict = new Dictionary<EventType, List<IObserver>>();
@@ -88,6 +101,26 @@ namespace Pong
             return sizeVector;
         }
 
+        public SpriteFont[] GetFonts()
+        {
+            if (fonts.Length > 0)
+            {
+                return fonts;
+            }
+
+            throw new InvalidOperationException("fonts array is currently empty");
+        }
+
+        public GameText[] GetGameTexts()
+        {
+            if (gameTexts.Length > 0)
+            {
+                return gameTexts;
+            }
+
+            throw new InvalidOperationException("gameTexts array is currently empty");
+        }
+
         //--------------------------------------PRIVATE METHODS---------------------------------
         private void InitAssets()
         {
@@ -99,19 +132,10 @@ namespace Pong
             TextureRegion playerTextureRegion = new TextureRegion(spriteSheet, computerTextureRegion.GetRectX() + computerTextureRegion.GetRectWidth(), 0, 17, 120);
             TextureRegion scoreBarTextureRegion = new TextureRegion(spriteSheet, playerTextureRegion.GetRectX() + playerTextureRegion.GetRectWidth(), 0, 341, 47);
 
-            textureRegions = new TextureRegion[6] {
-            ballTextureRegion,
-            ballMotionTextureRegion,
-            boardTextureRegion,
-            computerTextureRegion,
-            playerTextureRegion,
-            scoreBarTextureRegion,
-        };
-
             // Create sprites from texture regions
             Sprite ballSprite = new Sprite(ballTextureRegion);
             ballSprite.LayerDepth = 1.0f;
-            //ballSprite.CenterOrigin(); needed for circle collider, currently using rect collider
+            ballSprite.CenterOrigin(); 
 
             Sprite ballMotionSprite = new Sprite(ballMotionTextureRegion);
             ballMotionSprite.LayerDepth = 1.0f;
@@ -149,8 +173,29 @@ namespace Pong
             {
             ballSprite
             };
+
+            GameText genericMessage = new GameText(fonts[0]);
+            genericMessage.LayerDepth = 1.0f;
+
+            GameText playerScore = new GameText(fonts[0]);
+            playerScore.LayerDepth = 1.0f;
+            playerScore.Text = "0";
+            playerScore.Origin = playerScoreBarSprite.Origin;
+
+            GameText comScore = new GameText(fonts[0]);
+            comScore.LayerDepth = 1.0f;
+            comScore.Text = "0";
+            comScore.Origin = comScoreBarSprite.Origin;
+
+            gameTexts = new GameText[3]
+            {
+                playerScore,
+                comScore,
+                genericMessage
+            };
         }
 
+        //--------------------------------------OBSERVER PATTERN--------------------------------
         public void OnNotify(object eventData)
         {
             int numberOfBalls = (int)eventData;
@@ -166,7 +211,7 @@ namespace Pong
                 ballSprites[i] = ballSprite;
             }
 
-            Notify(EventType.ASSET_MAMAGER_BALL_ASSETS_UPDATED, numberOfBalls);
+            Notify(ASSET_MAMAGER_BALL_ASSETS_UPDATED, numberOfBalls);
         }
 
         public void Notify(EventType eventType, object eventData)

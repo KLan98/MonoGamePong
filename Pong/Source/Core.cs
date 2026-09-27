@@ -7,9 +7,10 @@ using System.Diagnostics;
 using Pong;
 
 namespace LanMonoGameLibrary;
+using static GameConstants;
 
 /// <summary>
-/// Reuseable code for many projects
+/// Re-useable code for many projects
 /// </summary>
 public class Core : Game
 {
@@ -17,13 +18,13 @@ public class Core : Game
     private static Core instance;
     // The graphics pipeline in MonoGame starts with two components: the GraphicsDeviceManager and SpriteBatch.
     private SpriteBatch spriteBatch; // The SpriteBatch optimizes 2D rendering by batching similar draw calls together, improving draw performance when rendering multiple sprites.
-    private GraphicsDeviceManager graphicsDeviceManager; // The GraphicsDeviceManager initializes and manages the connection to the graphics hardware. It handles tasks such as setting the screen resolution, toggling between fullscreen and windowed mode,  managing the GraphicsDevice and sprite scaling
+    private GraphicsDeviceManager graphicsDeviceManager; // The GraphicsDeviceManager initializes and manages the connection to the graphics hardware. It handles tasks such as setting the screen resolution, toggling between full screen and windowed mode,  managing the GraphicsDevice and sprite scaling
     private GraphicsDevice graphicsDevice; // the interface between your game and the Graphics Processing Unit (GPU) the game is running on
     private ContentManager contentManager;
     private KeyboardState oldState;
     protected DebugConsole debugConsole;
-    protected const float virtualHeight = 720f; // this is the resolution for mouse coordinates, sprite positions, UI layout, physics,these stay fixed internally
-    protected const float virtualWidth = 1280f;
+    protected const float virtualHeight = VIRTUAL_HEIGHT; // this is the resolution for mouse coordinates, sprite positions, UI layout, physics,these stay fixed internally
+    protected const float virtualWidth = VIRTUAL_WIDTH;
 
     //-------------------------------------PROPERTIES-----------------------------------------------------
     public SpriteBatch SpriteBatch
@@ -81,7 +82,7 @@ public class Core : Game
 
         // create new instance of debug console
         debugConsole = new DebugConsole(graphicsDeviceManager);
-        // inititalize debug console
+        // initialize debug console
         debugConsole.Initialize(this);
     }
 
@@ -174,6 +175,21 @@ public class Core : Game
     public float EaseInQuad(float x)
     {
         return x * x;
+    }
+
+    //--------------------------------------STATIC METHODS------------------------
+    public static bool TryGet<T>(object eventData, out T result)
+    {
+        // if the eventData is of type T with value v 
+        // then assign the result as value v
+        if (eventData is T v)
+        {
+            result = v;
+            return true;
+        }
+
+        result = default;
+        return false;
     }
 
     //-----------------------------------------------PRIVATE METHODS---------------------------------------
