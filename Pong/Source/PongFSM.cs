@@ -79,6 +79,8 @@ namespace Pong
 
                 scoringMessage = data.ScoringMessage;
                 scoringEntityID = data.EntityID;
+
+                Notify(FSM_STATE_CHANGED, GameState.Scored);
             }
         }
 
@@ -108,6 +110,8 @@ namespace Pong
                     {
                         new Machine(0f, FSM_PLAYING_BEGIN_COUNTDOWN, stateEndCountdown)
                     };
+
+                    Notify(FSM_STATE_CHANGED, GameState.Playing);
                 }
 
                 // ball stays stationary
@@ -122,6 +126,12 @@ namespace Pong
             for (int i = playingState.Length - 1; i >= 0; i--)
             {
                 playingState[i].StateTime += deltaTime;
+
+                // if play state > 10s x2 the ball's speed
+                if (playingState[i].StateTime >= 10f)
+                {
+                    
+                }
             }
 
             //--------------------------SCORED STATE-------------------------------
@@ -156,8 +166,17 @@ namespace Pong
                     // update backend score, no distinction between frontend and backend
                     // done on exit for avoiding multiple updates
                     Notify(FSM_SCORED_UPDATE_SCORE, scoringEntityID);
+                    Notify(FSM_STATE_CHANGED, GameState.Serve);
                 }
             }
         }
+    }
+
+    // payload of FSM_STATE_CHANGED
+    public enum GameState
+    {
+        Serve,
+        Playing,
+        Scored
     }
 }

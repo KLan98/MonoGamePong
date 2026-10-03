@@ -34,6 +34,7 @@ namespace Pong
         private Core core;
         private int balls; // default number of balls
         private AssetsManager assetsManager;
+        private ComController comController;
 
         public DebugConsole(GraphicsDeviceManager graphicsDeviceManager)
         {
@@ -44,6 +45,7 @@ namespace Pong
             core = Core.GetInstance();
             balls = GameConstants.DEFAULT_NUMBER_OF_BALLS;
             assetsManager = AssetsManager.GetInstance();
+            comController = ComController.GetInstance();
 
             ObserversDict = new Dictionary<EventType, List<IObserver>>();
         }
@@ -177,8 +179,16 @@ namespace Pong
                         {
                             if (ImGui.TreeNodeEx($"{movingEntities[i].ToString()}"))
                             {
-                                // implementation here
-                                ImGui.Text("Content for Child regions");
+                                if (movingEntities[i] == PhysicsManager.MovingEntities.Com)
+                                {
+                                    DrawComAISettings();
+                                }
+
+                                else
+                                {
+                                    // implementation here
+                                    ImGui.Text("Content for Child regions");
+                                }
 
                                 ImGui.TreePop();
                             }
@@ -192,6 +202,26 @@ namespace Pong
             }
 
             float remainingWidth = ImGui.GetContentRegionAvail().X;
+        }
+
+        // Live tuning of the COM paddle AI, edits the active profile in place
+        private void DrawComAISettings()
+        {
+            int difficulty = comController.Difficulty;
+            if (ImGui.Combo("Difficulty", ref difficulty, AIProfiles.Names, AIProfiles.Names.Length))
+            {
+                comController.SetDifficulty(difficulty);
+            }
+
+            ImGui.SliderFloat("Reaction delay (s)", ref comController.Profile.ReactionDelay, 0f, 1f);
+            ImGui.SliderFloat("Think interval (s)", ref comController.Profile.ThinkInterval, 0f, 0.5f);
+            ImGui.SliderFloat("Aim error (px)", ref comController.Profile.AimErrorPx, 0f, 120f);
+            ImGui.SliderFloat("Dead zone (px)", ref comController.Profile.DeadZonePx, 0f, 40f);
+            ImGui.Checkbox("Predict bounces", ref comController.Profile.PredictBounces);
+            ImGui.Checkbox("Return to center", ref comController.Profile.ReturnToCenter);
+
+            AIState state = comController.State;
+            ImGui.Text($"Tracked ball {state.TrackedBall}, target Y {state.TargetY:F0}, intent {state.Intent}");
         }
 
         public void Notify(EventType eventType, object eventData)

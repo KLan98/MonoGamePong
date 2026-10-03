@@ -22,6 +22,7 @@ public class MyGame : Core, IObserver
     private ScoringManager scoringManager;
     private PongFSM pongFSM;
     private TextRenderManager textRenderManager;
+    private ComController comController;
 
     public MyGame() : base("Pong", (int)virtualWidth, (int)virtualHeight, false)
     {
@@ -33,6 +34,7 @@ public class MyGame : Core, IObserver
         assetsManager = AssetsManager.Create(GetContentManager()); // pass this into assetManager's constructor for using observer pattern
         physicsManager = PhysicsManager.Create();
         inputManager = new InputManager(); // for now this input manager is exclusive
+        comController = ComController.Create(); // must exist before base.Initialize() creates the debug console
         pongFSM = new PongFSM();
         textRenderManager = new TextRenderManager();
         scoringManager = new ScoringManager(textRenderManager);
@@ -63,6 +65,7 @@ public class MyGame : Core, IObserver
     protected override void Update(GameTime gameTime)
     {
         inputManager.UpdateInput();
+        comController.UpdateAI(gameTime);
         physicsManager.UpdatePhysics(gameTime);
         //Debug.WriteLine(physicsManager.TestElapsedGameTime(gameTime));
         pongFSM.UpdateMachines(gameTime);
@@ -149,5 +152,6 @@ public class MyGame : Core, IObserver
         pongFSM.AddObserver(FSM_SCORED_UPDATE_SCORE, new DelegateObserver(scoringManager.OnUpdateScore));
         pongFSM.AddObserver(FSM_SERVE_DISPLAY_COUNTDOWN_MESSAGE, new DelegateObserver(textRenderManager.OnServeCountDown));
         pongFSM.AddObserver(FSM_DISPLAY_SCORED_MESSAGE, new DelegateObserver(textRenderManager.OnDisplayScoringMessage));
+        pongFSM.AddObserver(FSM_STATE_CHANGED, comController);
     }
 }
