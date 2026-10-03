@@ -126,6 +126,12 @@ namespace Pong
             for (int i = playingState.Length - 1; i >= 0; i--)
             {
                 playingState[i].StateTime += deltaTime;
+
+                // if play state > 10s x2 the ball's speed
+                if (playingState[i].StateTime >= 10f)
+                {
+                    
+                }
             }
 
             //--------------------------SCORED STATE-------------------------------

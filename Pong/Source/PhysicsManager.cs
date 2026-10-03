@@ -7,8 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using static Pong.GameConstants;
 using static Pong.EventType;
+using static Pong.GameConstants;
 
 namespace Pong
 {
@@ -154,7 +154,13 @@ namespace Pong
                 return;
             }
 
-            float angle = (float)(random.NextDouble() * MathHelper.TwoPi);
+            float maxAngle = MathHelper.ToRadians(BALL_SERVE_MAX_ANGLE);
+
+            //- NextDouble() gives a number in [0, 1).
+            //- * 2.0 stretches it to [0, 2).
+            //- - 1.0 shifts it to [-1, 1).
+            //- * maxAngle scales it to [-45°, +45°).
+            float angle = (float)(random.NextDouble() * 2.0f - 1.0f) * maxAngle;
             Vector2 ballDirection = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
             ballsOnScreen[0].Direction = ballDirection;
         }
@@ -340,6 +346,10 @@ namespace Pong
                         direction = velocity / easedSpeed;
                     }
                     ballsOnScreen[i].Impulse = Vector2.Zero; // one-shot, consume immediately so it isn't re-applied next frame
+                    float maxTilt = MathHelper.ToRadians(BALL_BOUNCE_MAX_ANGLE);
+                    float tilt = MathHelper.Clamp(MathF.Atan2(direction.Y, MathF.Abs(direction.X)), -maxTilt, maxTilt); // direction.X < 0 when moving towards player, clamp the angle of tilting to +-maxTilt
+                    float side = MathF.Sign(direction.X);  // after reflecting: +1 away from player, -1 away from COM
+                    direction = new Vector2(side * MathF.Cos(tilt), MathF.Sin(tilt)); // unit length again
                 }
 
                 ballsOnScreen[i].Position = newPosition;
